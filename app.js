@@ -9,6 +9,7 @@ function createCard(post){
   const div = document.createElement("div");
   div.className = "card";
   const img = document.createElement("img");
+  const video = document.createElement("video");
 
   if(post.type === "photo" && post.photo){
     img.src = `${window.API_BASE}/media_proxy?file_id=${post.photo}`;
@@ -21,6 +22,7 @@ function createCard(post){
   }
 
   div.appendChild(img);
+  div.appendChild(video);
   div.addEventListener("click", ()=> {
     location.href = `post.html?post_id=${post.post_id}`;
   });
