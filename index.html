@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اکسپلور — اینستا بله</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar"><h1>اینستا بله | اکسپلور</h1></header>
+  <main>
+    <div id="grid" class="grid"></div>
+    <div id="loading" class="loading">در حال بارگزاری...</div>
+  </main>
+
+<script src="app.js"></script>
+<script>
+  window.API_BASE = "https://furniture-hazards-swim-wow.trycloudflare.com/api";
+  window.initExplore();
+</script>
+<div id="nav"></div>
+
+<script>
+fetch("nav.html")
+  .then(r => r.text())
+  .then(html => {
+    const navContainer = document.getElementById("nav");
+    navContainer.innerHTML = html;
+
+    // اینجا اسکریپت دکمه پروفایل را اجرا می‌کنیم
+    const uid = BaleWebApp?.initDataUnsafe?.user?.id;
+    const profileLink = document.getElementById("profile-link");
+
+    if(uid){
+      profileLink.href = `profile.html?user_id=${uid}`;
+    } else {
+      profileLink.onclick = () => alert("شناسه کاربر یافت نشد");
+    }
+  });
+</script>
+</body>
+</html>

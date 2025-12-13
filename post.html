@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پست</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar"><a href="index.html">← بازگشت</a><h1>پست</h1></header>
+  <main id="post-root">
+    <div id="post-container"></div>
+  </main>
+<script src="app.js"></script>
+<script>
+  window.API_BASE = location.hostname === "127.0.0.1" || location.hostname === "localhost"
+    ? "http://127.0.0.1:8000/api"
+    : "https://YOUR_HOSTED_API_DOMAIN/api";
+  window.renderPostFromQuery();
+</script>
+<div id="nav"></div>
+<script>
+fetch("nav.html")
+  .then(r => r.text())
+  .then(html => {
+    const navContainer = document.getElementById("nav");
+    navContainer.innerHTML = html;
+
+    let uid = BaleWebApp?.initDataUnsafe?.user?.id;
+    if(!uid){
+      console.warn("BaleWebApp پیدا نشد — حالت تست");
+      uid = 1;
+    }
+
+    const profileLink = document.getElementById("profile-link");
+    profileLink.href = `profile.html?user_id=${uid}`;
+  });
+</script>
+</body>
+</html>
