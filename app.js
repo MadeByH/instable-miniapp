@@ -1,4 +1,20 @@
 // app.js
+// ===============================
+// Bale User Utils
+// ===============================
+function getUserId() {
+  if (
+    typeof BaleWebApp === "undefined" ||
+    !BaleWebApp.initDataUnsafe ||
+    !BaleWebApp.initDataUnsafe.user ||
+    !BaleWebApp.initDataUnsafe.user.id
+  ) {
+    alert("این برنامه فقط داخل بله کار می‌کند");
+    throw new Error("BALE_USER_NOT_FOUND");
+  }
+  return BaleWebApp.initDataUnsafe.user.id;
+}
+
 async function apiGet(path){
   const res = await fetch(window.API_BASE + path);
   if(!res.ok) throw new Error("API error");
@@ -8,24 +24,26 @@ async function apiGet(path){
 function createCard(post){
   const div = document.createElement("div");
   div.className = "card";
-  const img = document.createElement("img");
-  const video = document.createElement("video");
 
   if(post.type === "photo" && post.photo){
+    const img = document.createElement("img");
     img.src = `${window.API_BASE}/media_proxy?file_id=${post.photo}`;
-}
+    div.appendChild(img);
+  }
   else if(post.type === "video" && post.video_id){
+    const video = document.createElement("video");
     video.src = `${window.API_BASE}/media_proxy?file_id=${post.video_id}`;
-} else {
-    // fallback placeholder
+    video.controls = true;
+    div.appendChild(video);
+  } else {
+    const img = document.createElement("img");
     img.src = `https://via.placeholder.com/300x300?text=Post+${post.post_id}`;
+    div.appendChild(img);
   }
 
-  div.appendChild(img);
-  div.appendChild(video);
-  div.addEventListener("click", ()=> {
+  div.onclick = () => {
     location.href = `post.html?post_id=${post.post_id}`;
-  });
+  };
 
   return div;
 }
@@ -99,21 +117,18 @@ window.renderPostFromQuery = async function(){
 
 // --- profile functions ---
 window.renderProfileFromQuery = async function(){
-  const qs = new URLSearchParams(location.search);
-  const user_id = qs.get("user_id");
-  if(!user_id) {
+  const target_id = new URLSearchParams(location.search).get("user_id");
+  if(!target_id){
     document.getElementById("profile-root").innerHTML = "<p>پروفایل نامعتبر</p>";
     return;
   }
-  const viewer_id = qs.get("viewer_id") || 1; // توکن / session بعدا؛ اینجا برای تست user_id=1
-  const root = document.getElementById("profile-root");
-  const postsContainer = document.getElementById("profile-posts");
-  const loading = document.getElementById("loading");
+
+  const viewer_id = getUserId();
+
   try{
-    loading.style.display = "block";
-    const user = await apiGet(`/get_user/${user_id}`);
-    const posts = await apiGet(`/get_user_posts/${user_id}?limit=60`);
-    const followState = await apiGet(`/is_following?viewer=${viewer_id}&target=${user_id}`);
+    const user = await apiGet(`/get_user/${target_id}`);
+    const posts = await apiGet(`/get_user_posts/${target_id}`);
+    const followState = await apiGet(`/is_following?viewer=${viewer_id}&target=${target_id}`);
 
     loading.style.display = "none";
 
