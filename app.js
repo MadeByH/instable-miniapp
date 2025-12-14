@@ -9,18 +9,24 @@ function getUserId() {
     !BaleWebApp.initDataUnsafe.user ||
     !BaleWebApp.initDataUnsafe.user.id
   ) {
-    alert("این برنامه فقط داخل بله کار می‌کند");
+    alert("این برنامه فقط داخل بله اجرا می‌شود");
     throw new Error("BALE_USER_NOT_FOUND");
   }
   return BaleWebApp.initDataUnsafe.user.id;
 }
 
+// ===============================
+// API Helper
+// ===============================
 async function apiGet(path){
   const res = await fetch(window.API_BASE + path);
   if(!res.ok) throw new Error("API error");
   return res.json();
 }
 
+// ===============================
+// UI Helpers
+// ===============================
 function createCard(post){
   const div = document.createElement("div");
   div.className = "card";
@@ -48,63 +54,70 @@ function createCard(post){
   return div;
 }
 
+// ===============================
+// Explore
+// ===============================
 window.initExplore = async function(){
   const grid = document.getElementById("grid");
   const loading = document.getElementById("loading");
+
   try{
     const posts = await apiGet("/get_explore");
     loading.style.display = "none";
+
     if(posts.length === 0){
       loading.textContent = "پستی برای نمایش وجود ندارد";
       loading.style.display = "block";
       return;
     }
-    for(const p of posts){
-      grid.appendChild(createCard(p));
-    }
+
+    posts.forEach(p => grid.appendChild(createCard(p)));
   }catch(e){
     loading.textContent = "خطا در بارگیری اکسپلور";
     console.error(e);
   }
 }
 
+// ===============================
+// Single Post
+// ===============================
 window.renderPostFromQuery = async function(){
-  const qs = new URLSearchParams(location.search);
-  const post_id = qs.get("post_id");
-  if(!post_id) { document.getElementById("post-container").innerHTML = "<p>پست نامعتبر</p>"; return; }
+  const post_id = new URLSearchParams(location.search).get("post_id");
+  if(!post_id){
+    document.getElementById("post-container").innerHTML = "<p>پست نامعتبر</p>";
+    return;
+  }
+
+  const user_id = getUserId();
+
   try{
     const post = await apiGet(`/get_post/${post_id}`);
     const root = document.getElementById("post-container");
+
     const mediaUrl =
       post.type === "photo" && post.photo
         ? `${window.API_BASE}/media_proxy?file_id=${post.photo}`
         : post.type === "video" && post.video_id
           ? `${window.API_BASE}/media_proxy?file_id=${post.video_id}`
-          : `https://via.placeholder.com/720x480?text=Media`;
-    const html = `
+          : `https://via.placeholder.com/720x480`;
+
+    root.innerHTML = `
       <div class="post-main">
         <div><strong>${post.user_id}</strong></div>
-        <div style="margin-top:8px">
-          <img src="${mediaUrl}" style="width:100%;border-radius:8px">
-        </div>
+        <img src="${mediaUrl}" style="width:100%;border-radius:8px;margin-top:8px">
         <div style="margin-top:8px">${post.caption || ""}</div>
-        <div style="margin-top:10px">
-          <button class="btn" id="likeBtn">❤️ ${post.likes}</button>
-          <button class="btn" id="saveBtn">💾 ذخیره</button>
-        </div>
-        <div class="comments">
-          <h4>کامنت‌ها</h4>
-          ${post.comments.map(c=>`<div class="comment"><strong>${c.username||c.user_id}</strong>: ${c.text}</div>`).join("")}
-        </div>
+        <button class="btn" id="likeBtn">❤️ ${post.likes}</button>
       </div>
     `;
-    root.innerHTML = html;
 
     document.getElementById("likeBtn").onclick = async ()=>{
       await fetch(window.API_BASE + "/like", {
         method: "POST",
         headers: {"Content-Type":"application/json"},
-        body: JSON.stringify({user_id: 1, post_id: parseInt(post_id)}) // user_id=1 برای تست؛ بعدا از session استفاده کن
+        body: JSON.stringify({
+          user_id,
+          post_id: parseInt(post_id)
+        })
       });
       location.reload();
     }
@@ -115,7 +128,9 @@ window.renderPostFromQuery = async function(){
   }
 }
 
-// --- profile functions ---
+// ===============================
+// Profile
+// ===============================
 window.renderProfileFromQuery = async function(){
   const target_id = new URLSearchParams(location.search).get("user_id");
   if(!target_id){
@@ -124,82 +139,56 @@ window.renderProfileFromQuery = async function(){
   }
 
   const viewer_id = getUserId();
+  const root = document.getElementById("profile-root");
+  const postsContainer = document.getElementById("profile-posts");
+  const loading = document.getElementById("loading");
 
   try{
+    loading.style.display = "block";
+
     const user = await apiGet(`/get_user/${target_id}`);
     const posts = await apiGet(`/get_user_posts/${target_id}`);
     const followState = await apiGet(`/is_following?viewer=${viewer_id}&target=${target_id}`);
 
     loading.style.display = "none";
 
-    const avatar =
-      user.profile_pic
-        ? `${window.API_BASE}/media_proxy?file_id=${user.profile_pic}`
-        : "https://via.placeholder.com/160";
-    const isFollowing = followState.is_following;
+    const avatar = user.profile_pic
+      ? `${window.API_BASE}/media_proxy?file_id=${user.profile_pic}`
+      : "https://via.placeholder.com/160";
 
-    const html = `
+    root.innerHTML = `
       <div class="profile-head">
         <img src="${avatar}" class="avatar">
-        <div class="profile-meta">
-          <h2>${user.display_name || user.username || "کاربر"}</h2>
-          <div class="stats">
-            <div><strong id="followersCount">${user.followers||0}</strong><div>فالوئر</div></div>
-            <div><strong id="followingCount">${user.following||0}</strong><div>فالووینگ</div></div>
-            <div><strong>${posts.length}</strong><div>پست</div></div>
-          </div>
-          <p>${user.bio || ""}</p>
-        </div>
-        <div>
-          <button id="followBtn" class="follow-btn ${isFollowing ? 'unfollow-btn' : ''}">${isFollowing ? 'آنفالو' : 'فالو'}</button>
-        </div>
+        <h2>${user.display_name || user.username || "کاربر"}</h2>
+        <p>${user.bio || ""}</p>
+        <button id="followBtn" class="follow-btn">
+          ${followState.is_following ? "آنفالو" : "فالو"}
+        </button>
       </div>
     `;
-    root.innerHTML = html;
 
-    // render posts grid
     postsContainer.innerHTML = "";
-    posts.forEach(p => {
-      const card = createCard(p);
-      postsContainer.appendChild(card);
-    });
+    posts.forEach(p => postsContainer.appendChild(createCard(p)));
 
-    // follow button handler
     document.getElementById("followBtn").onclick = async ()=>{
-      try{
-        const res = await fetch(window.API_BASE + "/follow_toggle", {
-          method: "POST",
-          headers: {"Content-Type":"application/json"},
-          body: JSON.stringify({follower_id: parseInt(viewer_id), target_id: parseInt(user_id)})
-        });
-        const data = await res.json();
-        if(data.status){
-          // update UI counts (server returns new counts)
-          if(data.status === "followed"){
-            document.getElementById("followBtn").classList.add("unfollow-btn");
-            document.getElementById("followBtn").innerText = "آنفالو";
-          } else {
-            document.getElementById("followBtn").classList.remove("unfollow-btn");
-            document.getElementById("followBtn").innerText = "فالو";
-          }
-          if(data.target_followers !== undefined){
-            document.getElementById("followersCount").innerText = data.target_followers;
-          }
-          if(data.follower_following !== undefined){
-            document.getElementById("followingCount").innerText = data.follower_following;
-          }
-        } else {
-          console.warn("unexpected follow response", data);
-        }
-      }catch(e){
-        console.error(e);
-        alert("خطا در انجام عملیات فالو/آنفالو");
+      const res = await fetch(window.API_BASE + "/follow_toggle", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          follower_id: viewer_id,
+          target_id: parseInt(target_id)
+        })
+      });
+
+      const data = await res.json();
+      if(data.status){
+        document.getElementById("followBtn").innerText =
+          data.status === "followed" ? "آنفالو" : "فالو";
       }
-    }
+    };
 
   }catch(e){
-    loading.style.display = "block";
     loading.textContent = "خطا در بارگیری پروفایل";
     console.error(e);
   }
-}
+    }
