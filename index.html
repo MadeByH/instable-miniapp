@@ -27,15 +27,27 @@ fetch("nav.html")
     const navContainer = document.getElementById("nav");
     navContainer.innerHTML = html;
 
-    // اینجا اسکریپت دکمه پروفایل را اجرا می‌کنیم
-    const uid = BaleWebApp?.initDataUnsafe?.user?.id;
-    const profileLink = document.getElementById("profile-link");
+    // ----------------------------------------------------
+    //  کد جایگزین شده در اینجا قرار می‌گیرد
+    // ----------------------------------------------------
+    try {
+      // فرض می‌کنیم getUserId() در app.js تعریف شده و شناسه را برمی‌گرداند
+      const uid = getUserId(); 
+      const profileLink = document.getElementById("profile-link");
 
-    if(uid){
-      profileLink.href = `profile.html?user_id=${uid}`;
-    } else {
+      if(uid){
+        profileLink.href = `profile.html?user_id=${uid}`;
+      } else {
+        // این حالت در try/catch رخ نمی‌دهد مگر اینکه getUserId() مقدار معتبری (مثل undefined/null) برگرداند 
+        // اما برای اطمینان از وجود لینک پروفایل، شرط دوم را می‌گذاریم.
+        profileLink.onclick = () => alert("شناسه کاربر یافت نشد");
+      }
+
+    } catch (error) {
+      const profileLink = document.getElementById("profile-link");
       profileLink.onclick = () => alert("شناسه کاربر یافت نشد");
     }
+    // ----------------------------------------------------
   });
 </script>
 </body>
