@@ -26,11 +26,12 @@ fetch("nav.html")
     const navContainer = document.getElementById("nav");
     navContainer.innerHTML = html;
 
-    let uid = BaleWebApp?.initDataUnsafe?.user?.id;
-    if(!uid){
-      console.warn("BaleWebApp پیدا نشد — حالت تست");
-      uid = 1;
-    }
+    let uid;
+    try {
+      uid = getUserId();
+    } catch {
+      alert("این برنامه فقط داخل بله اجرا می‌شود");
+      }
 
     const profileLink = document.getElementById("profile-link");
     profileLink.href = `profile.html?user_id=${uid}`;
