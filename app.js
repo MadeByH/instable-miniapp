@@ -1,18 +1,21 @@
 // app.js
 // ===============================
-// Bale User Utils
+// Bale User Utils (اصلاح شده برای استفاده از window.Bale.WebApp)
 // ===============================
 function getUserId() {
+  // تعریف متغیر کمکی برای ارجاع به شیء صحیح
+  const webapp = window.Bale?.WebApp;
+
   if (
-    typeof BaleWebApp === "undefined" ||
-    !BaleWebApp.initDataUnsafe ||
-    !BaleWebApp.initDataUnsafe.user ||
-    !BaleWebApp.initDataUnsafe.user.id
+    !webapp ||                  // اگر شیء اصلی وجود نداشته باشد
+    !webapp.initDataUnsafe ||   // اگر داده‌های امن وجود نداشته باشد
+    !webapp.initDataUnsafe.user || // اگر کاربر وجود نداشته باشد
+    !webapp.initDataUnsafe.user.id // اگر شناسه کاربر وجود نداشته باشد
   ) {
     alert("این برنامه فقط داخل بله اجرا می‌شود");
     throw new Error("BALE_USER_NOT_FOUND");
   }
-  return BaleWebApp.initDataUnsafe.user.id;
+  return webapp.initDataUnsafe.user.id;
 }
 
 // ===============================
@@ -88,7 +91,20 @@ window.renderPostFromQuery = async function(){
     return;
   }
 
-  const user_id = getUserId();
+  // فراخوانی getUserId در try/catch برای مدیریت خطای پرتاب شده از آن
+  let user_id;
+  try {
+    user_id = getUserId();
+  } catch (e) {
+    if (e.message === "BALE_USER_NOT_FOUND") {
+        // اگر خطا به دلیل نبود کاربر بله پرتاب شد، اجرای منطق فرانت‌اند را متوقف کن
+        document.getElementById("post-container").innerHTML = "<p>برای مشاهده جزئیات، لطفاً اپلیکیشن را در محیط بله باز کنید.</p>";
+        return;
+    }
+    console.error(e);
+    return;
+  }
+
 
   try{
     const post = await apiGet(`/get_post/${post_id}`);
@@ -138,7 +154,20 @@ window.renderProfileFromQuery = async function(){
     return;
   }
 
-  const viewer_id = getUserId();
+  // فراخوانی getUserId در try/catch برای مدیریت خطای پرتاب شده از آن
+  let viewer_id;
+  try {
+    viewer_id = getUserId();
+  } catch (e) {
+    if (e.message === "BALE_USER_NOT_FOUND") {
+        // اگر خطا به دلیل نبود کاربر بله پرتاب شد، اجرای منطق فرانت‌اند را متوقف کن
+        document.getElementById("profile-root").innerHTML = "<p>برای مشاهده پروفایل و تعامل، لطفاً اپلیکیشن را در محیط بله باز کنید.</p>";
+        return;
+    }
+    console.error(e);
+    return;
+  }
+
   const root = document.getElementById("profile-root");
   const postsContainer = document.getElementById("profile-posts");
   const loading = document.getElementById("loading");
@@ -191,4 +220,4 @@ window.renderProfileFromQuery = async function(){
     loading.textContent = "خطا در بارگیری پروفایل";
     console.error(e);
   }
-    }
+}
