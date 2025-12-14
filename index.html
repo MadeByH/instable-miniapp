@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>اکسپلور — اینستا بله</title>
 <link rel="stylesheet" href="style.css">
+<!-- 1. مهم: اسکریپت لودر بله باید در اینجا (یا نزدیک به آن) لود شود -->
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
 </head>
 <body>
   <header class="topbar"><h1>اینستا بله | اکسپلور</h1></header>
@@ -16,38 +18,51 @@
 <script src="app.js"></script>
 <script>
   window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+  
+  // 2. پس از لود شدن app.js، اکسپلور را آغاز می‌کنیم
   window.initExplore();
 </script>
+
 <div id="nav"></div>
 
 <script>
+// تابعی برای تنظیم لینک پروفایل بر اساس شناسه کاربر بله
+function setupProfileLink() {
+    const navContainer = document.getElementById("nav");
+    // اگر nav.html لود نشده باشد، کاری انجام نده
+    if (!navContainer.children.length) return; 
+
+    try {
+      // تابعی که در app.js اصلاح شد، اکنون به درستی از window.Bale?.WebApp استفاده می‌کند
+      const uid = getUserId(); 
+      const profileLink = document.getElementById("profile-link");
+
+      if(uid && profileLink){
+        profileLink.href = `profile.html?user_id=${uid}`;
+      }
+    } catch (error) {
+      const profileLink = document.getElementById("profile-link");
+      if (profileLink) {
+        // اگر خطا به دلیل نبود محیط بله رخ داد، لینک را غیرفعال و پیام خطا نمایش می‌دهیم
+        profileLink.onclick = (e) => {
+            e.preventDefault(); // جلوگیری از هدایت به لینک ناشناخته
+            alert("برای دسترسی به پروفایل، لطفاً از داخل اپلیکیشن بله اقدام کنید.");
+        }
+        // می‌توان لینک را به یک صفحه عمومی هدایت کرد یا کلا غیرفعال کرد:
+        // profileLink.href = "#"; 
+      }
+      console.warn("خطا در تنظیم لینک پروفایل: اجرای خارج از محیط بله. خطا:", error.message);
+    }
+}
+
 fetch("nav.html")
   .then(r => r.text())
   .then(html => {
     const navContainer = document.getElementById("nav");
     navContainer.innerHTML = html;
-
-    // ----------------------------------------------------
-    //  کد جایگزین شده در اینجا قرار می‌گیرد
-    // ----------------------------------------------------
-    try {
-      // فرض می‌کنیم getUserId() در app.js تعریف شده و شناسه را برمی‌گرداند
-      const uid = getUserId(); 
-      const profileLink = document.getElementById("profile-link");
-
-      if(uid){
-        profileLink.href = `profile.html?user_id=${uid}`;
-      } else {
-        // این حالت در try/catch رخ نمی‌دهد مگر اینکه getUserId() مقدار معتبری (مثل undefined/null) برگرداند 
-        // اما برای اطمینان از وجود لینک پروفایل، شرط دوم را می‌گذاریم.
-        profileLink.onclick = () => alert("شناسه کاربر یافت نشد");
-      }
-
-    } catch (error) {
-      const profileLink = document.getElementById("profile-link");
-      profileLink.onclick = () => alert("شناسه کاربر یافت نشد");
-    }
-    // ----------------------------------------------------
+    
+    // پس از بارگذاری ناوبری، تابع تنظیم لینک پروفایل را اجرا می‌کنیم
+    setupProfileLink();
   });
 </script>
 </body>
