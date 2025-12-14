@@ -40,9 +40,31 @@ fetch("nav.html").then(r=>r.text()).then(html=>{
 });
 
 (async()=>{
-  const uid = BaleWebApp?.initDataUnsafe?.user?.id || 1;
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
+  let uid;
+
+  // -----------------------------------------------------------------
+  // اصلاح منطق دسترسی به UID بر اساس پیشنهاد کاربر
+  // -----------------------------------------------------------------
+  try {
+    // استفاده از تابع محافظت شده
+    uid = getUserId(); 
+  } catch (e) {
+    // در صورت خطا یا عدم تعریف تابع
+    alert("این برنامه فقط داخل بله اجرا می‌شود");
+    loading.textContent="خطا در احراز هویت";
+    return;
+  }
+
+  // اگر uid همچنان نامعتبر بود (مثلاً تابع getUserId مقدار null برگرداند)
+  if (!uid) {
+    alert("شناسه کاربر یافت نشد.");
+    loading.textContent="خطا: کاربر نامعتبر";
+    return;
+  }
+  // -----------------------------------------------------------------
+
 
   try{
     const res = await fetch(`${API_BASE}/notifications/${uid}`);
@@ -65,6 +87,7 @@ fetch("nav.html").then(r=>r.text()).then(html=>{
     });
 
   }catch(e){
+    console.error("Notification fetch error:", e);
     loading.textContent="خطا در دریافت اعلان‌ها";
   }
 })();
