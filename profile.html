@@ -68,6 +68,10 @@
 <script src="app.js"></script>
 <script>
   window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+  
+  // -----------------------------------------------------------------
+  // اصلاح منطق دسترسی به DOM برای تابع اصلی
+  // -----------------------------------------------------------------
   window.renderProfileFromQuery();
 </script>
 
@@ -81,15 +85,30 @@ fetch("nav.html")
     const navContainer = document.getElementById("nav");
     navContainer.innerHTML = html;
 
-    let uid = BaleWebApp?.initDataUnsafe?.user?.id;
-
-    if(!uid){
-      console.warn("BaleWebApp پیدا نشد — حالت تست");
-      uid = 1;
+    // ----------------------------------------------------
+    //  حذف منطق Fallback تست (uid = 1)
+    // ----------------------------------------------------
+    let uid;
+    try {
+      // استفاده از تابع جدیدی که شما پیشنهاد دادید
+      uid = getUserId(); 
+    } catch (e) {
+      console.error("Error getting user ID:", e);
     }
 
-    document.getElementById("profile-link").href =
-      `profile.html?user_id=${uid}`;
+    const profileLink = document.getElementById("profile-link");
+
+    if(uid){
+      // اطمینان از وجود لینک قبل از تغییر href
+      if(profileLink) {
+        profileLink.href = `profile.html?user_id=${uid}`;
+      }
+    } else {
+      // اگر uid پیدا نشد یا خطا رخ داد
+      if(profileLink) {
+        profileLink.onclick = () => alert("شناسه کاربر یافت نشد");
+      }
+    }
   });
 </script>
 
