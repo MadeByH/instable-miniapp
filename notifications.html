@@ -3,14 +3,33 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>اعلان‌ها</title>
+<title>اعلان‌ها (Debug)</title>
 <link rel="stylesheet" href="style.css">
+
+<style>
+  .log {
+    font-family: monospace;
+    font-size: 12px;
+    background: #111;
+    color: #0f0;
+    padding: 10px;
+    margin: 10px;
+    border-radius: 8px;
+    white-space: pre-wrap;
+    direction: ltr;
+  }
+  .error { color: #ff6b6b; }
+  .ok { color: #4cd137; }
+</style>
 </head>
 
 <body>
+
 <header class="topbar">
-  <h1>اعلان‌ها</h1>
+  <h1>اعلان‌ها (Debug)</h1>
 </header>
+
+<div id="debug" class="log">شروع لاگ…</div>
 
 <main id="notifRoot"></main>
 <div id="loading" class="loading">در حال بارگذاری…</div>
@@ -21,53 +40,113 @@
 <script>
 window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-const root = document.getElementById("notifRoot");
+const logBox = document.getElementById("debug");
 const loading = document.getElementById("loading");
+const root = document.getElementById("notifRoot");
 
-// ⛔ اگر اصلاً داخل بله نیستیم
-if (!window.Bale || !window.Bale.WebApp) {
-  loading.style.display = "none";
-  root.innerHTML = "اعلان‌ها فقط داخل اپلیکیشن بله قابل مشاهده هستند";
-  throw new Error("NOT_IN_BALE");
+function log(msg, cls="") {
+  const span = document.createElement("div");
+  span.textContent = msg;
+  if (cls) span.className = cls;
+  logBox.appendChild(span);
 }
 
-// ✅ داخل بله هستیم → صبر می‌کنیم ready شود
-Bale.WebApp.ready(async () => {
-  let uid;
+// ===============================
+// STEP 1: Check Bale
+// ===============================
+log("STEP 1: بررسی window.Bale ...");
 
-  try {
-    uid = getUserId();
-  } catch (e) {
-    loading.style.display = "none";
-    root.innerHTML = "در حال دریافت اطلاعات کاربر… لطفاً کمی صبر کنید";
+if (!window.Bale) {
+  log("❌ window.Bale وجود ندارد", "error");
+  loading.textContent = "Bale WebApp در دسترس نیست";
+  throw new Error("NO_BALE");
+}
+
+log("✅ window.Bale موجود است", "ok");
+
+// ===============================
+// STEP 2: Check WebApp
+// ===============================
+if (!window.Bale.WebApp) {
+  log("❌ Bale.WebApp وجود ندارد", "error");
+  loading.textContent = "WebApp لود نشده";
+  throw new Error("NO_WEBAPP");
+}
+
+log("✅ Bale.WebApp موجود است", "ok");
+
+// ===============================
+// STEP 3: ready()
+// ===============================
+log("STEP 2: فراخوانی Bale.WebApp.ready()");
+
+Bale.WebApp.ready(() => {
+  log("✅ WebApp.ready اجرا شد", "ok");
+
+  // ===============================
+  // STEP 4: initDataUnsafe
+  // ===============================
+  log("STEP 3: بررسی initDataUnsafe");
+
+  const data = Bale.WebApp.initDataUnsafe;
+  log("initDataUnsafe = " + JSON.stringify(data, null, 2));
+
+  if (!data) {
+    log("❌ initDataUnsafe خالی است", "error");
+    loading.textContent = "initDataUnsafe وجود ندارد";
     return;
   }
 
-  try {
-    const data = await apiGet(`/notifications/${uid}`);
-    loading.style.display = "none";
+  const uid =
+    data.user?.id ||
+    data.user_id ||
+    data.receiver?.id;
 
-    if (!data.length) {
-      root.innerHTML = "اعلانی وجود ندارد";
-      return;
-    }
+  log("STEP 4: استخراج userId");
 
-    data.forEach(n => {
-      const div = document.createElement("div");
-      div.className = "notif" + (n.is_read ? "" : " unread");
-      div.innerHTML = `
-        <div>${n.text}</div>
-        <div class="notif-time">${n.created_at}</div>
-      `;
-      root.appendChild(div);
-    });
-
-  } catch (e) {
-    loading.style.display = "none";
-    root.innerHTML = "خطا در دریافت اعلان‌ها";
-    console.error(e);
+  if (!uid) {
+    log("❌ userId پیدا نشد", "error");
+    loading.textContent = "userId نامعتبر";
+    return;
   }
+
+  log("✅ userId = " + uid, "ok");
+
+  // ===============================
+  // STEP 5: API Request
+  // ===============================
+  log("STEP 5: ارسال درخواست نوتیفیکیشن");
+
+  fetch(`${API_BASE}/notifications/${uid}`)
+    .then(res => {
+      log("HTTP Status = " + res.status);
+      return res.json();
+    })
+    .then(data => {
+      loading.style.display = "none";
+      log("API Response = " + JSON.stringify(data, null, 2));
+
+      if (!Array.isArray(data) || !data.length) {
+        root.innerHTML = "<p>اعلانی وجود ندارد</p>";
+        return;
+      }
+
+      data.forEach(n => {
+        const div = document.createElement("div");
+        div.className = "notif";
+        div.innerHTML = `
+          <div>${n.text}</div>
+          <div style="font-size:12px;opacity:.7">${n.created_at}</div>
+        `;
+        root.appendChild(div);
+      });
+    })
+    .catch(err => {
+      log("❌ خطا در fetch: " + err.message, "error");
+      loading.textContent = "خطا در دریافت اعلان‌ها";
+    });
 });
 </script>
+
 </body>
 </html>
