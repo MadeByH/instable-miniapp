@@ -28,6 +28,28 @@ async function apiGet(path) {
   return res.json();
 }
 
+async function waitForBaleUser(timeout = 5000) {
+  const start = Date.now();
+
+  while (Date.now() - start < timeout) {
+    if (
+      window.Bale &&
+      window.Bale.WebApp &&
+      window.Bale.WebApp.initDataUnsafe &&
+      (
+        window.Bale.WebApp.initDataUnsafe.user?.id ||
+        window.Bale.WebApp.initDataUnsafe.user_id ||
+        window.Bale.WebApp.initDataUnsafe.receiver?.id
+      )
+    ) {
+      return true;
+    }
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  throw new Error("BALE_USER_TIMEOUT");
+}
+
 // ---------- UI ----------
 function createCard(post) {
   const div = document.createElement("div");
