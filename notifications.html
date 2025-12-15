@@ -30,7 +30,6 @@
 <div id="loading" class="loading">در حال بارگذاری…</div>
 
 <div id="nav"></div>
-
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
 <script>
   if (window.Bale && window.Bale.WebApp) {
@@ -42,62 +41,48 @@
 <script>
 window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-fetch("nav.html").then(r=>r.text()).then(html=>{
-  document.getElementById("nav").innerHTML = html;
-});
+fetch("nav.html")
+  .then(r => r.text())
+  .then(html => {
+    document.getElementById("nav").innerHTML = html;
+  });
 
-(async()=>{
+runWhenBaleReady(async () => {
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
+
   let uid;
-
-  // -----------------------------------------------------------------
-  // اصلاح منطق دسترسی به UID بر اساس پیشنهاد کاربر
-  // -----------------------------------------------------------------
   try {
-    // استفاده از تابع محافظت شده
-    uid = getUserId(); 
+    uid = getUserId();
   } catch (e) {
-    // در صورت خطا یا عدم تعریف تابع
-    alert("این برنامه فقط داخل بله اجرا می‌شود");
-    loading.textContent="خطا در احراز هویت";
+    loading.textContent = "برای مشاهده اعلان‌ها، مینی‌اپ را داخل بله باز کنید";
     return;
   }
 
-  // اگر uid همچنان نامعتبر بود (مثلاً تابع getUserId مقدار null برگرداند)
-  if (!uid) {
-    alert("شناسه کاربر یافت نشد.");
-    loading.textContent="خطا: کاربر نامعتبر";
-    return;
-  }
-  // -----------------------------------------------------------------
-
-
-  try{
+  try {
     const res = await fetch(`${API_BASE}/notifications/${uid}`);
     const data = await res.json();
-    loading.style.display="none";
+    loading.style.display = "none";
 
-    if(!data.length){
-      root.innerHTML="<p style='text-align:center;color:#9eb0c8'>اعلانی وجود ندارد</p>";
+    if (!data.length) {
+      root.innerHTML = "<p style='text-align:center;color:#9eb0c8'>اعلانی وجود ندارد</p>";
       return;
     }
 
-    data.forEach(n=>{
-      const div=document.createElement("div");
-      div.className="notif"+(n.is_read?"":" unread");
-      div.innerHTML=`
+    data.forEach(n => {
+      const div = document.createElement("div");
+      div.className = "notif" + (n.is_read ? "" : " unread");
+      div.innerHTML = `
         <div>${n.text}</div>
         <div class="notif-time">${n.created_at}</div>
       `;
       root.appendChild(div);
     });
-
-  }catch(e){
-    console.error("Notification fetch error:", e);
-    loading.textContent="خطا در دریافت اعلان‌ها";
+  } catch (e) {
+    console.error(e);
+    loading.textContent = "خطا در دریافت اعلان‌ها";
   }
-})();
+});
 </script>
 </body>
 </html>
