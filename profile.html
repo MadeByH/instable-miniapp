@@ -65,6 +65,13 @@
     <div id="loading" class="loading">در حال بارگزاری...</div>
   </main>
 
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script>
+  if (window.Bale && window.Bale.WebApp) {
+    Bale.WebApp.ready();
+  }
+</script>
+
 <script src="app.js"></script>
 <script>
   window.API_BASE = "https://insta-api-avn2.onrender.com/api";
@@ -72,7 +79,9 @@
   // -----------------------------------------------------------------
   // اصلاح منطق دسترسی به DOM برای تابع اصلی
   // -----------------------------------------------------------------
+  setTimeout(() => {
   window.renderProfileFromQuery();
+}, 0);
 </script>
 
 <!-- این باید بیرون از Script باشد -->
