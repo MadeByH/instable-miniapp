@@ -1,32 +1,45 @@
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script src="app.js"></script>
+
 <script>
-const logBox = document.getElementById("debug");
+window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+
+const root = document.getElementById("notifRoot");
+const loading = document.getElementById("loading");
+
 function log(msg) {
   const d = document.createElement("div");
   d.textContent = msg;
-  logBox.appendChild(d);
+  d.style.fontSize = "12px";
+  d.style.opacity = "0.8";
+  root.appendChild(d);
 }
 
 (async () => {
-  log("STEP 1: شروع انتظار برای کاربر بله...");
+  log("🔹 شروع MiniApp");
 
   try {
+    log("⏳ waitForBaleUser()");
     await waitForBaleUser();
-    log("✅ initDataUnsafe آماده شد");
 
     const uid = getUserId();
-    log("✅ userId = " + uid);
+    log("👤 userId = " + uid);
 
     const res = await fetch(`${API_BASE}/notifications/${uid}`);
-    log("HTTP Status = " + res.status);
+    log("📡 HTTP = " + res.status);
 
-    const data = await res.json();
-    log("API Response = " + JSON.stringify(data));
+    let data;
+    try {
+      data = await res.json();
+    } catch {
+      throw new Error("INVALID_JSON_FROM_API");
+    }
 
-    document.getElementById("loading").style.display = "none";
+    log("📦 data = " + JSON.stringify(data));
+    loading.style.display = "none";
 
-    if (!data.length) {
-      document.getElementById("notifRoot").innerHTML =
-        "<p>اعلانی وجود ندارد</p>";
+    if (!Array.isArray(data) || data.length === 0) {
+      root.innerHTML += "<p>اعلانی وجود ندارد</p>";
       return;
     }
 
@@ -37,13 +50,12 @@ function log(msg) {
         <div>${n.text}</div>
         <div class="notif-time">${n.created_at}</div>
       `;
-      document.getElementById("notifRoot").appendChild(div);
+      root.appendChild(div);
     });
 
   } catch (e) {
-    log("❌ ERROR: " + e.message);
-    document.getElementById("loading").textContent =
-      "خطا در دریافت اعلان‌ها";
+    loading.style.display = "none";
+    root.innerHTML += `<p style="color:red">❌ ${e.message}</p>`;
   }
 })();
-</script>
+    </script>
