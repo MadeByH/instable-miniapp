@@ -1,88 +1,37 @@
-<!doctype html>
-<html lang="fa">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>اعلان‌ها</title>
-<link rel="stylesheet" href="style.css">
-<style>
-.notif{
-  padding:14px;
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-.notif.unread{
-  background:rgba(120,160,255,.08);
-}
-.notif-time{
-  font-size:12px;
-  color:#8aa0b8;
-  margin-top:4px;
-}
-</style>
-</head>
-
-<body>
-<header class="topbar">
-  <h1>اعلان‌ها</h1>
-</header>
-
-<main id="notifRoot"></main>
-<div id="loading" class="loading">در حال بارگذاری…</div>
-
-<div id="nav"></div>
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script>
-  if (window.Bale && window.Bale.WebApp) {
-    Bale.WebApp.ready();
-  }
-</script>
-
 <script src="app.js"></script>
 <script>
 window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-fetch("nav.html")
-  .then(r => r.text())
-  .then(html => {
-    document.getElementById("nav").innerHTML = html;
-  });
-
-runWhenBaleReady(async () => {
+(async () => {
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
 
   let uid;
   try {
     uid = getUserId();
-  } catch (e) {
-    loading.textContent = "برای مشاهده اعلان‌ها، مینی‌اپ را داخل بله باز کنید";
+  } catch {
+    loading.textContent = "اعلان‌ها فقط داخل بله قابل مشاهده‌اند";
     return;
   }
 
   try {
-    const res = await fetch(`${API_BASE}/notifications/${uid}`);
-    const data = await res.json();
+    const data = await apiGet(`/notifications/${uid}`);
     loading.style.display = "none";
 
     if (!data.length) {
-      root.innerHTML = "<p style='text-align:center;color:#9eb0c8'>اعلانی وجود ندارد</p>";
+      root.innerHTML = "اعلانی وجود ندارد";
       return;
     }
 
     data.forEach(n => {
       const div = document.createElement("div");
       div.className = "notif" + (n.is_read ? "" : " unread");
-      div.innerHTML = `
-        <div>${n.text}</div>
-        <div class="notif-time">${n.created_at}</div>
-      `;
+      div.innerHTML = `<div>${n.text}</div>`;
       root.appendChild(div);
     });
-  } catch (e) {
-    console.error(e);
+  } catch {
     loading.textContent = "خطا در دریافت اعلان‌ها";
   }
-});
+})();
 </script>
-</body>
-</html>
