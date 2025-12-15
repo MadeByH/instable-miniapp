@@ -1,20 +1,26 @@
 // app.js
 // ===============================
-// Bale User Utils (اصلاح شده برای استفاده از window.Bale.WebApp)
+// Bale MiniApp – Safe User Access (OFFICIAL)
 // ===============================
-function getUserId() {
-  // تعریف متغیر کمکی برای ارجاع به شیء صحیح
-  const webapp = window.Bale?.WebApp;
-
-  if (
-    !webapp ||                  // اگر شیء اصلی وجود نداشته باشد
-    !webapp.initDataUnsafe ||   // اگر داده‌های امن وجود نداشته باشد
-    !webapp.initDataUnsafe.user || // اگر کاربر وجود نداشته باشد
-    !webapp.initDataUnsafe.user.id // اگر شناسه کاربر وجود نداشته باشد
-  ) {
-    alert("این برنامه فقط داخل بله اجرا می‌شود");
-    throw new Error("BALE_USER_NOT_FOUND");
+function getBaleWebApp() {
+  if (!window.Bale || !window.Bale.WebApp) {
+    throw new Error("BALE_WEBAPP_NOT_FOUND");
   }
+  return window.Bale.WebApp;
+}
+
+function getUserId() {
+  const webapp = getBaleWebApp();
+
+  // خیلی مهم: initDataUnsafe فقط بعد از ready معتبر است
+  if (
+    !webapp.initDataUnsafe ||
+    !webapp.initDataUnsafe.user ||
+    !webapp.initDataUnsafe.user.id
+  ) {
+    throw new Error("BALE_USER_NOT_READY");
+  }
+
   return webapp.initDataUnsafe.user.id;
 }
 
