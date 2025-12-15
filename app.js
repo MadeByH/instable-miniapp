@@ -32,6 +32,17 @@ function getUserId() {
   return uid;
 }
 
+function runWhenBaleReady(cb) {
+  if (window.Bale && window.Bale.WebApp) {
+    Bale.WebApp.ready(() => {
+      cb();
+    });
+  } else {
+    // fallback
+    document.addEventListener("DOMContentLoaded", cb);
+  }
+}
+
 // ===============================
 // API Helper
 // ===============================
@@ -110,7 +121,13 @@ window.renderPostFromQuery = async function(){
   try {
     user_id = getUserId();
   } catch (e) {
-    if (e.message === "BALE_USER_NOT_FOUND") {
+    if (
+  e.message === "BALE_USER_NOT_FOUND" ||
+  e.message === "BALE_USER_NOT_READY"
+) {
+  root.innerHTML = "لطفاً مینی‌اپ را داخل بله باز کنید";
+  return;
+    }
         // اگر خطا به دلیل نبود کاربر بله پرتاب شد، اجرای منطق فرانت‌اند را متوقف کن
         document.getElementById("post-container").innerHTML = "<p>برای مشاهده جزئیات، لطفاً اپلیکیشن را در محیط بله باز کنید.</p>";
         return;
@@ -173,8 +190,13 @@ window.renderProfileFromQuery = async function(){
   try {
     viewer_id = getUserId();
   } catch (e) {
-    if (e.message === "BALE_USER_NOT_FOUND") {
-        // اگر خطا به دلیل نبود کاربر بله پرتاب شد، اجرای منطق فرانت‌اند را متوقف کن
+   if (
+  e.message === "BALE_USER_NOT_FOUND" ||
+  e.message === "BALE_USER_NOT_READY"
+) {
+  root.innerHTML = "لطفاً مینی‌اپ را داخل بله باز کنید";
+  return;
+   }        // اگر خطا به دلیل نبود کاربر بله پرتاب شد، اجرای منطق فرانت‌اند را متوقف کن
         document.getElementById("profile-root").innerHTML = "<p>برای مشاهده پروفایل و تعامل، لطفاً اپلیکیشن را در محیط بله باز کنید.</p>";
         return;
     }
