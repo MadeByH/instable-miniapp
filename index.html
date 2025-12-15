@@ -6,27 +6,56 @@
 <title>اکسپلور — اینستا بله</title>
 <link rel="stylesheet" href="style.css">
 <!-- 1. مهم: اسکریپت لودر بله باید در اینجا (یا نزدیک به آن) لود شود -->
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-</head>
-<body>
+    <!-- 1. لودر بله -->
+    <script src="https://tapi.bale.ai/miniapp.js?3"></script>
+    
+    <!-- 2. اسکریپت اصلی شما -->
+    <script src="app.js"></script>
 
-<script>
-  if (window.Bale && window.Bale.WebApp) {
-    Bale.WebApp.ready();
-  }
-</script>
+    <!-- 3. کد تنظیم کننده نهایی و آماده سازی محیط بله -->
+    <script>
+        // ما منتظر می مانیم تا هم app.js لود شود و هم محیط بله آماده باشد.
+        
+        // ابتدا مطمئن می شویم که app.js لود شده است
+        if (window.initExplore && window.setupProfileLink) {
+            
+            // اگر متغیر Bale در دسترس است، آن را ready می کنیم
+            if (window.Bale && window.Bale.WebApp) {
+                Bale.WebApp.ready();
+            }
+            
+            // سپس منطق اصلی را اجرا می کنیم
+            console.log("تنظیمات اولیه بله و اپلیکیشن پس از لود شدن آغاز شد.");
+            window.initExplore(); 
+            
+            // اجرای منطق ناوبری که به getUserId وابسته است
+            fetch("nav.html")
+              .then(r => r.text())
+              .then(html => {
+                document.getElementById("nav").innerHTML = html;
+                window.setupProfileLink(); // فراخوانی تابع جدید شما
+              });
+
+        } else {
+            // اگر app.js لود نشده، پیام خطا نمایش داده شود (اختیاری)
+            console.error("فایل app.js لود نشد یا توابع اصلی تعریف نشده اند.");
+        }
+    </script>
+
+    <!-- ناحیه خطا (که شما اضافه کرده بودید) -->
+    <div id="error-display" style="display: none; color: white; background-color: red; padding: 15px; border-radius: 8px; margin: 10px;">
+        <strong>خطای سیستم:</strong>
+        <p id="error-message"></p>
+    </div>
+
+</body>
+</html>
 
   <header class="topbar"><h1>اینستا بله | اکسپلور</h1></header>
   <main>
     <div id="grid" class="grid"></div>
     <div id="loading" class="loading">در حال بارگذاری...</div>
   </main>
-
-<div id="error-display" style="display: none; color: white; background-color: red; padding: 15px; border-radius: 8px; margin: 10px;">
-    <strong>خطای سیستم:</strong>
-    <p id="error-message"></p>
-    <p>لطفاً پس از چند لحظه مجدداً تلاش کنید یا با پشتیبانی تماس بگیرید.</p>
-</div>
 
 <script src="app.js"></script>
 <script>
