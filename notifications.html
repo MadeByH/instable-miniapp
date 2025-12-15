@@ -31,6 +31,13 @@
 
 <div id="nav"></div>
 
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script>
+  if (window.Bale && window.Bale.WebApp) {
+    Bale.WebApp.ready();
+  }
+</script>
+
 <script src="app.js"></script>
 <script>
 window.API_BASE = "https://insta-api-avn2.onrender.com/api";
