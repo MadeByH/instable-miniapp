@@ -1,17 +1,45 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اعلان‌ها</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+<header class="topbar">
+  <h1>اعلان‌ها</h1>
+</header>
+
+<main id="notifRoot"></main>
+<div id="loading" class="loading">در حال بارگذاری…</div>
+
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
 <script src="app.js"></script>
+
 <script>
 window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-(async () => {
-  const root = document.getElementById("notifRoot");
-  const loading = document.getElementById("loading");
+const root = document.getElementById("notifRoot");
+const loading = document.getElementById("loading");
 
+// ⛔ اگر اصلاً داخل بله نیستیم
+if (!window.Bale || !window.Bale.WebApp) {
+  loading.style.display = "none";
+  root.innerHTML = "اعلان‌ها فقط داخل اپلیکیشن بله قابل مشاهده هستند";
+  throw new Error("NOT_IN_BALE");
+}
+
+// ✅ داخل بله هستیم → صبر می‌کنیم ready شود
+Bale.WebApp.ready(async () => {
   let uid;
+
   try {
     uid = getUserId();
-  } catch {
-    loading.textContent = "اعلان‌ها فقط داخل بله قابل مشاهده‌اند";
+  } catch (e) {
+    loading.style.display = "none";
+    root.innerHTML = "در حال دریافت اطلاعات کاربر… لطفاً کمی صبر کنید";
     return;
   }
 
@@ -27,11 +55,19 @@ window.API_BASE = "https://insta-api-avn2.onrender.com/api";
     data.forEach(n => {
       const div = document.createElement("div");
       div.className = "notif" + (n.is_read ? "" : " unread");
-      div.innerHTML = `<div>${n.text}</div>`;
+      div.innerHTML = `
+        <div>${n.text}</div>
+        <div class="notif-time">${n.created_at}</div>
+      `;
       root.appendChild(div);
     });
-  } catch {
-    loading.textContent = "خطا در دریافت اعلان‌ها";
+
+  } catch (e) {
+    loading.style.display = "none";
+    root.innerHTML = "خطا در دریافت اعلان‌ها";
+    console.error(e);
   }
-})();
+});
 </script>
+</body>
+</html>
