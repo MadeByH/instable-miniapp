@@ -1,107 +1,36 @@
 <!doctype html>
 <html lang="fa">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1">
-    <title>اکسپلور — اینستا بله</title>
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- 1. ناحیه خطا (تعریف شده و در ابتدا مخفی، فقط برای اطمینان در head قرار می‌گیرد اما بهتر است در body باشد) -->
-    <div id="error-display" style="display: none; color: white; background-color: red; padding: 15px; border-radius: 8px; margin: 10px;">
-        <strong>خطای سیستم:</strong>
-        <p id="error-message"></p>
-    </div>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>اکسپلور</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- 2. تگ‌های اصلی محتوا -->
-    <header class="topbar"><h1>اینستا بله | اکسپلور</h1></header>
-    <main>
-        <div id="grid" class="grid"></div>
-        <div id="loading" class="loading">در حال بارگذاری...</div>
-    </main>
-    <div id="nav"></div>
+<header class="topbar"><h1>اینستا بله</h1></header>
 
+<main>
+  <div id="grid" class="grid"></div>
+  <div id="loading" class="loading">در حال بارگذاری…</div>
+</main>
 
-    <!-- =========================================== -->
-    <!-- 3. بلوک اسکریپت‌های اجرایی (فقط یک بار، قبل از بسته شدن body) -->
-    <!-- =========================================== -->
+<div id="nav"></div>
 
-    <!-- الف) لودر بله -->
-    <script src="https://tapi.bale.ai/miniapp.js?3"></script>
-    
-    <!-- ب) اسکریپت اصلی شما (که توابع تعریف شده را شامل می‌شود) -->
-    <script>
-        window.API_BASE = "https://insta-api-avn2.onrender.com/api"; // یا هر آدرس دیگری
-    </script>
-    <script src="app.js"></script>
+<script>
+  window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+</script>
+<script src="app.js"></script>
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
 
+<script>
+  if (window.Bale?.WebApp) Bale.WebApp.ready();
+  window.initExplore();
 
-    <!-- ج) کد تنظیم کننده نهایی و اجرای منطق برنامه -->
-    <script>
-        // **1. اجرای آماده‌سازی محیط بله**
-        if (window.Bale && window.Bale.WebApp) {
-            Bale.WebApp.ready();
-        }
-        
-        // **2. اجرای منطق اصلی اکسپلور**
-        // مطمئن می‌شویم که تابع در app.js تعریف شده باشد
-        if (window.initExplore) {
-            console.log("اجرای window.initExplore()...");
-            window.initExplore(); 
-        } else {
-            console.error("تابع window.initExplore در app.js پیدا نشد!");
-        }
-        
-        // **3. بارگذاری ناوبری و تنظیم لینک پروفایل**
-        
-        // تابعی برای تنظیم لینک پروفایل (برگرفته از کد شما)
-        function setupProfileLink() {
-            const navContainer = document.getElementById("nav");
-            // اگر nav.html لود نشده باشد، کاری انجام نده
-            if (!navContainer.children.length) return; 
-
-            try {
-              // اطمینان از وجود تابع getUserId در app.js
-              const uid = getUserId(); 
-              const profileLink = document.getElementById("profile-link");
-
-              if(uid && profileLink){
-                profileLink.href = `profile.html?user_id=${uid}`;
-              }
-            } catch (error) {
-              const profileLink = document.getElementById("profile-link");
-              if (profileLink) {
-                profileLink.onclick = (e) => {
-                    e.preventDefault(); 
-                    alert("برای دسترسی به پروفایل، لطفاً از داخل اپلیکیشن بله اقدام کنید.");
-                }
-              }
-              console.warn("خطا در تنظیم لینک پروفایل: اجرای خارج از محیط بله. خطا:", error.message);
-            }
-        }
-        
-        fetch("nav.html")
-          .then(response => {
-              if (!response.ok) {
-                  throw new Error(`خطا در لود nav.html: ${response.statusText}`);
-              }
-              return response.text();
-          })
-          .then(html => {
-            const navContainer = document.getElementById("nav");
-            navContainer.innerHTML = html;
-            
-            // اجرای تابع تنظیم لینک پروفایل پس از بارگذاری کامل ناوبری
-            setupProfileLink(); 
-          })
-          .catch(error => {
-              console.error("خطا در بارگذاری nav.html:", error);
-              // اگر nav لود نشد، باز هم سعی می‌کنیم تنظیم پروفایل را انجام دهیم (ممکن است لینک پیدا نشود)
-              setupProfileLink(); 
-          });
-
-    </script>
+  fetch("nav.html")
+    .then(r => r.text())
+    .then(html => nav.innerHTML = html);
+</script>
 
 </body>
 </html>
