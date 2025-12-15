@@ -1,111 +1,103 @@
 <!doctype html>
 <html lang="fa">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>اکسپلور — اینستا بله</title>
-<link rel="stylesheet" href="style.css">
-<!-- 1. مهم: اسکریپت لودر بله باید در اینجا (یا نزدیک به آن) لود شود -->
-    <!-- 1. لودر بله -->
-    <script src="https://tapi.bale.ai/miniapp.js?3"></script>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>اکسپلور — اینستا بله</title>
+    <link rel="stylesheet" href="style.css">
     
-    <!-- 2. اسکریپت اصلی شما -->
-    <script src="app.js"></script>
-
-    <!-- 3. کد تنظیم کننده نهایی و آماده سازی محیط بله -->
-    <script>
-        // ما منتظر می مانیم تا هم app.js لود شود و هم محیط بله آماده باشد.
-        
-        // ابتدا مطمئن می شویم که app.js لود شده است
-        if (window.initExplore && window.setupProfileLink) {
-            
-            // اگر متغیر Bale در دسترس است، آن را ready می کنیم
-            if (window.Bale && window.Bale.WebApp) {
-                Bale.WebApp.ready();
-            }
-            
-            // سپس منطق اصلی را اجرا می کنیم
-            console.log("تنظیمات اولیه بله و اپلیکیشن پس از لود شدن آغاز شد.");
-            window.initExplore(); 
-            
-            // اجرای منطق ناوبری که به getUserId وابسته است
-            fetch("nav.html")
-              .then(r => r.text())
-              .then(html => {
-                document.getElementById("nav").innerHTML = html;
-                window.setupProfileLink(); // فراخوانی تابع جدید شما
-              });
-
-        } else {
-            // اگر app.js لود نشده، پیام خطا نمایش داده شود (اختیاری)
-            console.error("فایل app.js لود نشد یا توابع اصلی تعریف نشده اند.");
-        }
-    </script>
-
-    <!-- ناحیه خطا (که شما اضافه کرده بودید) -->
+    <!-- 1. ناحیه خطا (تعریف شده و در ابتدا مخفی، فقط برای اطمینان در head قرار می‌گیرد اما بهتر است در body باشد) -->
     <div id="error-display" style="display: none; color: white; background-color: red; padding: 15px; border-radius: 8px; margin: 10px;">
         <strong>خطای سیستم:</strong>
         <p id="error-message"></p>
     </div>
+</head>
+<body>
 
-</body>
-</html>
+    <!-- 2. تگ‌های اصلی محتوا -->
+    <header class="topbar"><h1>اینستا بله | اکسپلور</h1></header>
+    <main>
+        <div id="grid" class="grid"></div>
+        <div id="loading" class="loading">در حال بارگذاری...</div>
+    </main>
+    <div id="nav"></div>
 
-  <header class="topbar"><h1>اینستا بله | اکسپلور</h1></header>
-  <main>
-    <div id="grid" class="grid"></div>
-    <div id="loading" class="loading">در حال بارگذاری...</div>
-  </main>
 
-<script src="app.js"></script>
-<script>
-  window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-  
-  // 2. پس از لود شدن app.js، اکسپلور را آغاز می‌کنیم
-  window.initExplore();
-</script>
+    <!-- =========================================== -->
+    <!-- 3. بلوک اسکریپت‌های اجرایی (فقط یک بار، قبل از بسته شدن body) -->
+    <!-- =========================================== -->
 
-<div id="nav"></div>
-
-<script>
-// تابعی برای تنظیم لینک پروفایل بر اساس شناسه کاربر بله
-function setupProfileLink() {
-    const navContainer = document.getElementById("nav");
-    // اگر nav.html لود نشده باشد، کاری انجام نده
-    if (!navContainer.children.length) return; 
-
-    try {
-      // تابعی که در app.js اصلاح شد، اکنون به درستی از window.Bale?.WebApp استفاده می‌کند
-      const uid = getUserId(); 
-      const profileLink = document.getElementById("profile-link");
-
-      if(uid && profileLink){
-        profileLink.href = `profile.html?user_id=${uid}`;
-      }
-    } catch (error) {
-      const profileLink = document.getElementById("profile-link");
-      if (profileLink) {
-        // اگر خطا به دلیل نبود محیط بله رخ داد، لینک را غیرفعال و پیام خطا نمایش می‌دهیم
-        profileLink.onclick = (e) => {
-            e.preventDefault(); // جلوگیری از هدایت به لینک ناشناخته
-            alert("برای دسترسی به پروفایل، لطفاً از داخل اپلیکیشن بله اقدام کنید.");
-        }
-        // می‌توان لینک را به یک صفحه عمومی هدایت کرد یا کلا غیرفعال کرد:
-        // profileLink.href = "#"; 
-      }
-      console.warn("خطا در تنظیم لینک پروفایل: اجرای خارج از محیط بله. خطا:", error.message);
-    }
-}
-
-fetch("nav.html")
-  .then(r => r.text())
-  .then(html => {
-    const navContainer = document.getElementById("nav");
-    navContainer.innerHTML = html;
+    <!-- الف) لودر بله -->
+    <script src="https://tapi.bale.ai/miniapp.js?3"></script>
     
-    // پس از بارگذاری ناوبری، تابع تنظیم لینک پروفایل را اجرا می‌کنیم
-    setupProfileLink();
-  });
-</script>
+    <!-- ب) اسکریپت اصلی شما (که توابع تعریف شده را شامل می‌شود) -->
+    <script src="app.js"></script>
+
+    <!-- ج) کد تنظیم کننده نهایی و اجرای منطق برنامه -->
+    <script>
+        // **1. اجرای آماده‌سازی محیط بله**
+        if (window.Bale && window.Bale.WebApp) {
+            Bale.WebApp.ready();
+        }
+        
+        // **2. اجرای منطق اصلی اکسپلور**
+        // مطمئن می‌شویم که تابع در app.js تعریف شده باشد
+        if (window.initExplore) {
+            console.log("اجرای window.initExplore()...");
+            window.initExplore(); 
+        } else {
+            console.error("تابع window.initExplore در app.js پیدا نشد!");
+        }
+        
+        // **3. بارگذاری ناوبری و تنظیم لینک پروفایل**
+        
+        // تابعی برای تنظیم لینک پروفایل (برگرفته از کد شما)
+        function setupProfileLink() {
+            const navContainer = document.getElementById("nav");
+            // اگر nav.html لود نشده باشد، کاری انجام نده
+            if (!navContainer.children.length) return; 
+
+            try {
+              // اطمینان از وجود تابع getUserId در app.js
+              const uid = getUserId(); 
+              const profileLink = document.getElementById("profile-link");
+
+              if(uid && profileLink){
+                profileLink.href = `profile.html?user_id=${uid}`;
+              }
+            } catch (error) {
+              const profileLink = document.getElementById("profile-link");
+              if (profileLink) {
+                profileLink.onclick = (e) => {
+                    e.preventDefault(); 
+                    alert("برای دسترسی به پروفایل، لطفاً از داخل اپلیکیشن بله اقدام کنید.");
+                }
+              }
+              console.warn("خطا در تنظیم لینک پروفایل: اجرای خارج از محیط بله. خطا:", error.message);
+            }
+        }
+        
+        fetch("nav.html")
+          .then(response => {
+              if (!response.ok) {
+                  throw new Error(`خطا در لود nav.html: ${response.statusText}`);
+              }
+              return response.text();
+          })
+          .then(html => {
+            const navContainer = document.getElementById("nav");
+            navContainer.innerHTML = html;
+            
+            // اجرای تابع تنظیم لینک پروفایل پس از بارگذاری کامل ناوبری
+            setupProfileLink(); 
+          })
+          .catch(error => {
+              console.error("خطا در بارگذاری nav.html:", error);
+              // اگر nav لود نشد، باز هم سعی می‌کنیم تنظیم پروفایل را انجام دهیم (ممکن است لینک پیدا نشود)
+              setupProfileLink(); 
+          });
+
+    </script>
+
 </body>
 </html>
