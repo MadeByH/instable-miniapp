@@ -10,18 +10,26 @@ function getBaleWebApp() {
 }
 
 function getUserId() {
-  const webapp = getBaleWebApp();
+  if (!window.Bale || !window.Bale.WebApp) {
+    throw new Error("BALE_WEBAPP_NOT_FOUND");
+  }
 
-  // خیلی مهم: initDataUnsafe فقط بعد از ready معتبر است
-  if (
-    !webapp.initDataUnsafe ||
-    !webapp.initDataUnsafe.user ||
-    !webapp.initDataUnsafe.user.id
-  ) {
+  const data = window.Bale.WebApp.initDataUnsafe;
+  if (!data) {
     throw new Error("BALE_USER_NOT_READY");
   }
 
-  return webapp.initDataUnsafe.user.id;
+  const uid =
+    data.user?.id ||
+    data.user_id ||
+    data.receiver?.id;
+
+  if (!uid) {
+    console.warn("initDataUnsafe =", data);
+    throw new Error("BALE_USER_NOT_FOUND");
+  }
+
+  return uid;
 }
 
 // ===============================
