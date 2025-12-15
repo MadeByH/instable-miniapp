@@ -4,11 +4,8 @@
 
 // ---------- Bale helpers ----------
 function getUserId() {
-  if (!window.Bale || !window.Bale.WebApp) {
-    throw new Error("BALE_NOT_AVAILABLE");
-  }
+  const data = window.Bale?.WebApp?.initDataUnsafe;
 
-  const data = window.Bale.WebApp.initDataUnsafe;
   const uid =
     data?.user?.id ||
     data?.user_id ||
