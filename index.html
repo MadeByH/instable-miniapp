@@ -7,6 +7,12 @@
 <link rel="stylesheet" href="style.css">
 <!-- 1. مهم: اسکریپت لودر بله باید در اینجا (یا نزدیک به آن) لود شود -->
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script>
+  // حتماً بعد از لود miniapp.js
+  if (window.Bale && window.Bale.WebApp) {
+    Bale.WebApp.ready();
+  }
+</script>
 </head>
 <body>
   <header class="topbar"><h1>اینستا بله | اکسپلور</h1></header>
