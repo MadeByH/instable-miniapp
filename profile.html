@@ -3,122 +3,168 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>پروفایل — اینستا بله</title>
+<title>پروفایل</title>
 <link rel="stylesheet" href="style.css">
 
 <style>
-  .profile-head{
-    max-width:720px;
-    margin:18px auto;
-    padding:18px;
-    background:var(--card);
-    border-radius:14px;
-    display:flex;
-    gap:18px;
-    align-items:center;
-    box-shadow:0 4px 16px rgba(0,0,0,0.25);
-  }
-  .avatar{
-    width:90px;height:90px;
-    border-radius:50%;
-    object-fit:cover;
-    border:2.5px solid rgba(255,255,255,0.08);
-  }
-  .profile-meta{ flex:1; }
-  .profile-meta h2{ margin:0;font-size:20px;color:#fff; }
-  .profile-meta p{ margin:6px 0;color:#9eb0c8;line-height:1.5; }
-  .stats{ display:flex;gap:18px;margin-top:10px;text-align:center; }
-  .stats div{ font-size:14px;color:#d0e0f0; }
-  .stats div strong{ font-size:17px;color:#fff; }
-  .follow-btn{
-    padding:9px 18px;
-    border-radius:10px;
-    background:var(--accent);
-    font-size:14px;color:white;
-    border:none;cursor:pointer;transition:0.25s;
-  }
-  .follow-btn:active{ transform:scale(0.94);}
-  .unfollow-btn{
-    background:transparent!important;
-    border:1px solid rgba(255,255,255,0.15)!important;
-  }
-  .grid{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:4px;padding:8px;
-  }
-  .grid img{
-    width:100%;height:100%;
-    object-fit:cover;border-radius:6px;
-  }
+.profile-head{
+  max-width:720px;
+  margin:18px auto;
+  padding:18px;
+  background:var(--card);
+  border-radius:14px;
+  display:flex;
+  gap:18px;
+}
+.avatar{
+  width:90px;height:90px;border-radius:50%;
+}
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:4px;
+}
+.center-msg{
+  text-align:center;
+  color:#9eb0c8;
+  margin-top:30px;
+}
 </style>
-
 </head>
+
 <body>
-  <header class="topbar">
-    <a href="index.html">← بازگشت</a><h1>پروفایل</h1>
-  </header>
 
-  <main>
-    <div id="profile-root" style="max-width:720px;margin:12px auto"></div>
-    <div id="profile-posts" class="grid" style="max-width:720px;margin:12px auto"></div>
-    <div id="loading" class="loading">در حال بارگزاری...</div>
-  </main>
+<header class="topbar">
+  <a href="index.html">←</a>
+  <h1>پروفایل</h1>
+</header>
 
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script>
-  if (window.Bale && window.Bale.WebApp) {
-    Bale.WebApp.ready();
-  }
-</script>
+<main>
+  <div id="profile-root"></div>
+  <div id="profile-posts" class="grid"></div>
+  <div id="loading" class="loading">در حال بارگذاری…</div>
+</main>
 
-<script src="app.js"></script>
-<script>
-  window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-  
-  // -----------------------------------------------------------------
-  // اصلاح منطق دسترسی به DOM برای تابع اصلی
-  // -----------------------------------------------------------------
-  runWhenBaleReady(() => {
-  window.renderProfileFromQuery();
-});
-</script>
-
-<!-- این باید بیرون از Script باشد -->
 <div id="nav"></div>
 
+<!-- ============================= -->
+<!-- Config -->
+<!-- ============================= -->
+<script>
+window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+</script>
+
+<!-- ============================= -->
+<!-- Bale Loader -->
+<!-- ============================= -->
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+
+<!-- ============================= -->
+<!-- Helpers (همان نوتیف) -->
+<!-- ============================= -->
+<script>
+async function waitForBaleUser(timeout = 6000) {
+  const start = Date.now();
+  while (Date.now() - start < timeout) {
+    if (
+      window.Bale?.WebApp?.initDataUnsafe &&
+      (
+        window.Bale.WebApp.initDataUnsafe.user?.id ||
+        window.Bale.WebApp.initDataUnsafe.user_id ||
+        window.Bale.WebApp.initDataUnsafe.receiver?.id
+      )
+    ) return true;
+    await new Promise(r => setTimeout(r, 100));
+  }
+  throw new Error("USER_NOT_READY");
+}
+
+function getUserId() {
+  const d = window.Bale.WebApp.initDataUnsafe;
+  return d.user?.id || d.user_id || d.receiver?.id || null;
+}
+
+function safeStart(fn){
+  let done=false;
+  [200,800,1500].forEach(t=>{
+    setTimeout(()=>{
+      if(!done){ done=true; fn(); }
+    },t);
+  });
+}
+</script>
+
+<!-- ============================= -->
+<!-- Main Logic -->
+<!-- ============================= -->
+<script>
+async function loadProfile(){
+  const root = document.getElementById("profile-root");
+  const postsEl = document.getElementById("profile-posts");
+  const loading = document.getElementById("loading");
+
+  try{
+    if(!window.Bale || !window.Bale.WebApp)
+      throw new Error("NOT_IN_BALE");
+
+    await waitForBaleUser();
+
+    const viewerId = getUserId();
+    if(!viewerId) throw new Error("NO_USER");
+
+    const targetId =
+      new URLSearchParams(location.search).get("user_id") || viewerId;
+
+    const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
+    const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
+
+    loading.style.display="none";
+
+    root.innerHTML = `
+      <div class="profile-head">
+        <img class="avatar" src="${user.profile_pic
+          ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
+          : 'https://via.placeholder.com/90'}">
+        <div>
+          <h3>${user.display_name || "کاربر"}</h3>
+          <p>${user.bio || ""}</p>
+        </div>
+      </div>
+    `;
+
+    postsEl.innerHTML="";
+    posts.forEach(p=>{
+      const img=document.createElement("img");
+      img.src = p.photo
+        ? `${API_BASE}/media_proxy?file_id=${p.photo}`
+        : "https://via.placeholder.com/300";
+      postsEl.appendChild(img);
+    });
+
+  }catch(e){
+    loading.style.display="none";
+    if(e.message==="NOT_IN_BALE")
+      root.innerHTML=`<p class="center-msg">این صفحه فقط داخل بله قابل استفاده است</p>`;
+    else
+      root.innerHTML=`<p class="center-msg">کاربر وجود ندارد</p>`;
+  }
+}
+</script>
+
+<!-- ============================= -->
+<!-- Run -->
+<!-- ============================= -->
+<script>
+safeStart(loadProfile);
+</script>
+
+<!-- ============================= -->
+<!-- Nav -->
+<!-- ============================= -->
 <script>
 fetch("nav.html")
-  .then(r => r.text())
-  .then(html => {
-    const navContainer = document.getElementById("nav");
-    navContainer.innerHTML = html;
-
-    // ----------------------------------------------------
-    //  حذف منطق Fallback تست (uid = 1)
-    // ----------------------------------------------------
-    let uid;
-    try {
-      // استفاده از تابع جدیدی که شما پیشنهاد دادید
-      uid = getUserId(); 
-    } catch (e) {
-      console.error("Error getting user ID:", e);
-    }
-
-    const profileLink = document.getElementById("profile-link");
-
-    if(uid){
-      // اطمینان از وجود لینک قبل از تغییر href
-      if(profileLink) {
-        profileLink.href = `profile.html?user_id=${uid}`;
-      }
-    } else {
-      // اگر uid پیدا نشد یا خطا رخ داد
-      if(profileLink) {
-        profileLink.onclick = () => alert("شناسه کاربر یافت نشد");
-      }
-    }
-  });
+  .then(r=>r.text())
+  .then(html=>document.getElementById("nav").innerHTML=html);
 </script>
 
 </body>
