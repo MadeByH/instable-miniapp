@@ -1,141 +1,201 @@
+<!doctype html>  
+<html lang="fa">  
+<head>  
+<meta charset="utf-8">  
+<meta name="viewport" content="width=device-width,initial-scale=1">  
+<title>اعلان‌ها</title>  
+<link rel="stylesheet" href="style.css">  
+  
+<style>  
+.notif{  
+  padding:14px;  
+  border-bottom:1px solid rgba(255,255,255,.06);  
+}  
+.notif-time{  
+  font-size:12px;  
+  color:#8aa0b8;  
+  margin-top:4px;  
+}  
+.center-msg{  
+  text-align:center;  
+  color:#9eb0c8;  
+  margin-top:30px;  
+}  
+</style>  
+</head>  
+  
+<body>  
+  
+<header class="topbar">  
+  <h1>اعلان‌ها</h1>  
+</header>  
+  
+<main id="notifRoot"></main>  
+<div id="loading" class="loading">در حال بارگذاری…</div>  
+<div id="nav"></div>  
+  
+<!-- ============================= -->  
+<!-- تنظیمات -->  
+<!-- ============================= -->  
+<script>  
+window.API_BASE = "https://insta-api-avn2.onrender.com/api";  
+</script>  
+  
+<!-- ============================= -->  
+<!-- Bale Loader -->  
+<!-- ============================= -->  
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>  
+  
+<script src="auth.js"></script>
+
 // --- تنظیمات اولیه (باید قبلاً تعریف شده باشند) ---
-const API_BASE = "https://insta-api-avn2.onrender.com/api"; // آدرس سرور شما
-// فرض بر وجود توابع: getUserId(), waitForBaleUser() در محیط بله
+// این خط در HTML شما هست، اما برای اطمینان دوباره تعریف می‌شود
+// window.API_BASE = "https://insta-api-avn2.onrender.com/api"; 
 
 // ---------------------------------------------------------------------
 // 1. تابع کمکی برای تزریق مستقیم پیام‌ها در صفحه (جایگزین console.log/error)
 // ---------------------------------------------------------------------
+<!-- ============================= -->  
+<!-- Main Logic -->  
+<!-- ============================= -->  
+<script>  
 function displayMessage(message, isError = false) {
     const root = document.getElementById("notifRoot");
     const errorBox = document.getElementById("error-display");
     
     if (!root) {
-        // Fallback: در صورت عدم یافتن ریشه اصلی در DOM، از کنسول استفاده می‌شود.
         console.log("Root element not found. Message:", message, isError ? "(ERROR)" : "(INFO)");
         return;
     }
 
-    // اگر خطا باشد و باکس خطا تعریف شده باشد، خطا را در آن نمایش می‌دهیم.
     if (isError && errorBox) {
         errorBox.innerText = message;
         errorBox.style.display = "block";
         root.innerHTML = ''; 
     } else {
-        // در غیر این صورت، پیام را در محتوای اصلی نمایش می‌دهیم و باکس خطا را پنهان می‌کنیم.
         if (errorBox) errorBox.style.display = "none";
         root.innerHTML = `<p class="${isError ? 'error-msg' : 'center-msg'}">${message}</p>`;
     }
 }
 
 // ---------------------------------------------------------------------
-// 2. تغییر در ensureRegistered: بازگشت شیء در صورت خطا (به جز ریدایرکت اجباری)
+// 2. نسخه بازنویسی شده ensureRegistered (باید در auth.js یا اینجا باشد)
 // ---------------------------------------------------------------------
 async function ensureRegistered() {
     if (!window.Bale?.WebApp)
         return { ok: false, reason: "NOT_IN_BALE" }; 
 
-    await waitForBaleUser();
+    await window.waitForBaleUser();
 
-    const userId = getUserId();
+    const userId = window.getUserId();
     if (!userId)
         return { ok: false, reason: "NO_USER" }; 
 
-    const res = await fetch(`${API_BASE}/user_exists/${userId}`);
+    const res = await fetch(`${window.API_BASE}/user_exists/${userId}`);
     if (!res.ok)
         return { ok: false, reason: "API_ERROR" }; 
 
     const data = await res.json();
 
     if (!data.exists) {
-        // کاربر ثبت‌نام نکرده است: ریدایرکت اجباری به register.html
-        location.replace("register.html");
-        // پرتاب خطا برای توقف اجرای فعلی و هدایت به catch برای مدیریت موقعیت ریدایرکت
+        window.location.replace("register.html");
         throw new Error("REDIRECT_REGISTER"); 
     }
 
-    // موفقیت: شناسه کاربری را به عنوان عدد برمی‌گردانیم
     return parseInt(userId);
 }
 
 // ---------------------------------------------------------------------
 // 3. بازنویسی loadNotifications برای مدیریت خروجی‌های جدید در صفحه
 // ---------------------------------------------------------------------
-async function loadNotifications() {
-    const root = document.getElementById("notifRoot");
-    const loading = document.getElementById("loading");
-    
-    if (loading) loading.style.display = "block"; 
-    if (root) root.innerHTML = ''; 
-    if (document.getElementById("error-display")) document.getElementById("error-display").style.display = "none";
+async function loadNotifications() {  
+  const root = document.getElementById("notifRoot");  
+  const loading = document.getElementById("loading");  
+  
+  if (loading) loading.style.display = "block"; 
+  if (root) root.innerHTML = ''; 
+  if (document.getElementById("error-display")) document.getElementById("error-display").style.display = "none";
 
 
-    try {
-        const result = await ensureRegistered();
+  try {  
+    const result = await ensureRegistered();  
         
-        // مدیریت نتایج خطا از ensureRegistered که ریدایرکت نکردند (برگشت شیء)
-        if (typeof result === 'object' && result !== null && !result.ok) {
-            const reason = result.reason;
+    if (typeof result === 'object' && result !== null && !result.ok) {
+        const reason = result.reason;
             
-            if (reason === "NOT_IN_BALE") {
-                displayMessage("این سرویس فقط درون اپلیکیشن بله قابل دسترسی است.", true);
-            } else if (reason === "NO_USER") {
-                 displayMessage("خطا در دریافت شناسه کاربری از بله.", true);
-            } else if (reason === "API_ERROR") {
-                 displayMessage("خطا در ارتباط با سرور برای تایید ثبت نام.", true);
-            }
-            if (loading) loading.style.display = "none";
-            return;
+        if (reason === "NOT_IN_BALE") {
+            displayMessage("این سرویس فقط درون اپلیکیشن بله قابل دسترسی است.", true);
+        } else if (reason === "NO_USER") {
+             displayMessage("خطا در دریافت شناسه کاربری از بله.", true);
+        } else if (reason === "API_ERROR") {
+             displayMessage("خطا در ارتباط با سرور برای تایید ثبت نام.", true);
         }
-        
-        // اگر موفق بود، result همان userId (عدد) است
-        const userId = result; 
-        displayMessage(`در حال بارگذاری اعلان‌ها برای کاربر ${userId}...`, false);
-
-        // --- منطق اصلی دریافت و نمایش اعلان‌ها ---
-        const res = await fetch(`${API_BASE}/notifications/${userId}?limit=50`);
-
-        if (!res.ok) {
-            displayMessage(`خطا در دریافت اعلان‌ها (Status: ${res.status})`, true);
-            if (loading) loading.style.display = "none";
-            return;
-        }
-
-        const data = await res.json();
-
-        if (!data.length) {
-            displayMessage("شما هیچ اعلان جدیدی ندارید.");
-        } else {
-            // نمایش لیست اعلان‌ها
-            root.innerHTML = ''; // پاک کردن پیام موقت
-            data.forEach(n => {
-                const div = document.createElement("div");
-                div.className = "notif";
-                div.innerHTML = `
-                    <div>${n.text}</div>
-                    <div class="notif-time">${n.created_at}</div>
-                `;
-                root.appendChild(div);
-            });
-        }
-
-    } catch (e) {
-        // مدیریت خطاهای پرتاب شده (REDIRECT_REGISTER یا USER_NOT_READY)
         if (loading) loading.style.display = "none";
-        
-        if (e.message === "REDIRECT_REGISTER") {
-            // اگر ریدایرکت شکست خورد یا نیاز به نمایش وضعیت انتقال داشت
-            displayMessage("در حال انتقال به صفحه ثبت نام...", false);
-            return; 
-        } else if (e.message === "USER_NOT_READY") {
-             displayMessage("دریافت اطلاعات بله با تأخیر مواجه شد. لطفا مجدداً بارگذاری نمایید.", true);
-        } else {
-            // خطای کاملاً ناشناخته
-            displayMessage("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"), true);
-        }
-    } finally {
-        if (loading) loading.style.display = "none";
+        return;
     }
-}
+        
+    const userId = result; 
+    displayMessage(`در حال بارگذاری اعلان‌ها برای کاربر ${userId}...`, false);
 
-// فراخوانی تابع اصلی برای شروع فرآیند
-loadNotifications();
+    const res = await fetch(`${window.API_BASE}/notifications/${userId}?limit=50`);
+
+    if (!res.ok) {
+        displayMessage(`خطا در دریافت اعلان‌ها (Status: ${res.status})`, true);
+        if (loading) loading.style.display = "none";
+        return;
+    }
+
+    const data = await res.json();
+
+    if (!Array.isArray(data) || data.length === 0) {  
+        displayMessage("شما هیچ اعلان جدیدی ندارید.");  
+    } else {  
+        root.innerHTML = ''; 
+        data.forEach(n => {  
+            const div = document.createElement("div");  
+            div.className = "notif";  
+            div.innerHTML = `  
+                <div>${n.text}</div>  
+                <div class="notif-time">${n.created_at}</div>  
+            `;  
+            root.appendChild(div);  
+        });  
+    }
+
+  } catch (e) {  
+    if (loading) loading.style.display = "none";
+        
+    if (e.message === "REDIRECT_REGISTER") {  
+        displayMessage("در حال انتقال به صفحه ثبت نام...", false);
+        return; 
+    } else if (e.message === "USER_NOT_READY") {
+         displayMessage("دریافت اطلاعات بله با تأخیر مواجه شد. لطفا مجدداً بارگذاری نمایید.", true);
+    } else {  
+        displayMessage("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"), true);
+    }
+  } finally {  
+    if (loading) loading.style.display = "none";
+  }
+}
+</script>  
+
+<!-- ============================= -->  
+<!-- Run -->  
+<!-- ============================= -->  
+<script>  
+if (typeof safeStart === "function") {  
+  safeStart(loadNotifications);  
+}  
+</script>  
+  
+<!-- ============================= -->  
+<!-- Navigation -->  
+<!-- ============================= -->  
+<script>  
+fetch("nav.html")  
+  .then(r => r.text())  
+  .then(html => document.getElementById("nav").innerHTML = html);  
+</script>  
+  
+</body>  
+</html>
