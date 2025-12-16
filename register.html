@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تکمیل پروفایل</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.card{
+  max-width:420px;
+  margin:40px auto;
+  padding:24px;
+  background:var(--card);
+  border-radius:16px;
+}
+input, textarea{
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+}
+button{
+  margin-top:18px;
+  width:100%;
+  padding:12px;
+  border-radius:12px;
+  background:var(--accent);
+  border:none;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card">
+  <h2>تکمیل پروفایل</h2>
+
+  <input id="displayName" placeholder="نام نمایشی">
+  <textarea id="bio" placeholder="بیو (اختیاری)"></textarea>
+
+  <button onclick="submitRegister()">ثبت و ادامه</button>
+  <p id="msg" style="margin-top:10px;color:#f88"></p>
+</div>
+
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script>
+window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+</script>
+
+<script>
+async function submitRegister(){
+  const msg = document.getElementById("msg");
+
+  try{
+    await waitForBaleUser();
+    const userId = getUserId();
+
+    const display_name = document.getElementById("displayName").value.trim();
+    const bio = document.getElementById("bio").value.trim();
+
+    if(!display_name){
+      msg.textContent = "نام نمایشی الزامی است";
+      return;
+    }
+
+    await fetch(`${API_BASE}/register`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        user_id: userId,
+        display_name,
+        bio
+      })
+    });
+
+    location.href = "index.html";
+
+  }catch(e){
+    msg.textContent = "خطا در ثبت کاربر";
+    console.error(e);
+  }
+}
+</script>
+
+</body>
+  </html>
