@@ -1,25 +1,12 @@
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script src="auth.js"></script>
-
-<script>
 async function loadNotifications() {
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
-
-  loading.style.display = "block";
 
   const auth = await ensureRegistered();
 
   if (!auth.ok) {
     loading.style.display = "none";
-
-    if (auth.reason === "NOT_REGISTERED") {
-      location.replace("register.html");
-      return;
-    }
-
-    root.innerHTML = `<p class="center-msg">عدم دسترسی</p>`;
-    return;
+    return; // ⬅️ مهم
   }
 
   const res = await fetch(`${API_BASE}/notifications/${auth.userId}`);
@@ -48,6 +35,4 @@ async function loadNotifications() {
   });
 }
 
-Bale.WebApp.ready();
-loadNotifications();
-    </script>
+safeStart(loadNotifications);
