@@ -1,38 +1,110 @@
-async function loadNotifications() {
-  const root = document.getElementById("notifRoot");
-  const loading = document.getElementById("loading");
+<!DOCTYPE html>
+<html>
 
-  const auth = await ensureRegistered();
+<head>
+  <title>Notifications</title>
+  <style>
+    /* استایل‌های قبلی */
+    .center-msg {
+      text-align: center;
+      margin-top: 20px;
+    }
 
-  if (!auth.ok) {
-    loading.style.display = "none";
-    return; // ⬅️ مهم
-  }
+    .notif {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
 
-  const res = await fetch(`${API_BASE}/notifications/${auth.userId}`);
-  loading.style.display = "none";
+    .notif-time {
+      font-size: 0.8em;
+      color: #888;
+    }
+  </style>
+</head>
 
-  if (!res.ok) {
-    root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها</p>`;
-    return;
-  }
+<body>
+  <h1>Notifications</h1>
+  <div id="notifRoot">
+    <div id="loading">Loading...</div>
+  </div>
 
-  const data = await res.json();
+  <!-- باکس نمایش خطا -->
+  <div id="error-display" style="
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background-color: rgba(255, 0, 0, 0.8);
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      z-index: 1000;
+    "></div>
 
-  if (!data.length) {
-    root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
-    return;
-  }
+  <script>
+    const API_BASE = "/api"; // یا هر آدرس API شما
 
-  data.forEach(n => {
-    const div = document.createElement("div");
-    div.className = "notif";
-    div.innerHTML = `
-      <div>${n.text}</div>
-      <div class="notif-time">${n.created_at}</div>
-    `;
-    root.appendChild(div);
-  });
-}
+    async function loadNotifications() {
+      const root = document.getElementById("notifRoot");
+      const loading = document.getElementById("loading");
 
-safeStart(loadNotifications);
+      try {
+        const auth = await ensureRegistered();
+
+        if (!auth.ok) {
+          loading.style.display = "none";
+          return; // ⬅️ مهم
+        }
+
+        const res = await fetch(`${API_BASE}/notifications/${auth.userId}`);
+        loading.style.display = "none";
+
+        if (!res.ok) {
+          root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها</p>`;
+          return;
+        }
+
+        const data = await res.json();
+
+        if (!data.length) {
+          root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
+          return;
+        }
+
+        data.forEach(n => {
+          const div = document.createElement("div");
+          div.className = "notif";
+          div.innerHTML = `
+            <div>${n.text}</div>
+            <div class="notif-time">${n.created_at}</div>
+          `;
+          root.appendChild(div);
+        });
+      } catch (e) {
+        console.error("Error:", e);
+        displayError("متاسفیم! خطایی رخ داده: " + e.message);
+      }
+    }
+
+    function displayError(message) {
+      const errorBox = document.getElementById("error-display");
+      errorBox.innerText = message;
+      errorBox.style.display = "block";
+    }
+
+    function safeStart(fn) {
+      try {
+        fn();
+      } catch (e) {
+        console.error("SafeStart Error:", e);
+        displayError("خطا در safeStart: " + e.message);
+      }
+    }
+
+    safeStart(loadNotifications);
+  </script>
+</body>
+
+</html>
