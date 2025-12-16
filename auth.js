@@ -20,11 +20,18 @@ function getUserId() {
   return d.user?.id || d.user_id || d.receiver?.id || null;
 }
 
-/**
- * فقط وضعیت کاربر را برمی‌گرداند
- * ❌ redirect ندارد
- * ❌ throw ندارد
- */
+function safeStart(fn){
+  let done=false;
+  [200,800,1500].forEach(t=>{
+    setTimeout(()=>{
+      if(!done){
+        done=true;
+        fn().catch(console.error); // 🔴 مهم
+      }
+    },t);
+  });
+}
+
 async function ensureRegistered() {
   if (!window.Bale?.WebApp)
     return { ok:false, reason:"NOT_IN_BALE" };
@@ -35,20 +42,16 @@ async function ensureRegistered() {
   if (!userId)
     return { ok:false, reason:"NO_USER" };
 
-  let res;
-  try {
-    res = await fetch(`${API_BASE}/user_exists/${userId}`);
-  } catch {
-    return { ok:false, reason:"API_DOWN" };
-  }
-
+  const res = await fetch(`${API_BASE}/user_exists/${userId}`);
   if (!res.ok)
     return { ok:false, reason:"API_ERROR" };
 
   const data = await res.json();
 
-  if (!data.exists)
-    return { ok:false, reason:"NOT_REGISTERED" };
+  if (!data.exists) {
+    location.replace("register.html");
+    return { ok:false, reason:"REDIRECT_REGISTER" };
+  }
 
   return { ok:true, userId };
 }
