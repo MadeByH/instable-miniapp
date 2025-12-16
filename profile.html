@@ -58,6 +58,7 @@ window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 <!-- Bale Loader -->
 <!-- ============================= -->
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script src="auth.js"></script>
 
 <!-- ============================= -->
 <!-- Helpers (همان نوتیف) -->
@@ -104,13 +105,7 @@ async function loadProfile(){
   const loading = document.getElementById("loading");
 
   try{
-    if(!window.Bale || !window.Bale.WebApp)
-      throw new Error("NOT_IN_BALE");
-
-    await waitForBaleUser();
-
-    const viewerId = getUserId();
-    if(!viewerId) throw new Error("NO_USER");
+    const viewerId = await ensureRegistered();
 
     const targetId =
       new URLSearchParams(location.search).get("user_id") || viewerId;
@@ -145,8 +140,9 @@ async function loadProfile(){
     loading.style.display="none";
     if(e.message==="NOT_IN_BALE")
       root.innerHTML=`<p class="center-msg">این صفحه فقط داخل بله قابل استفاده است</p>`;
-    else
-      root.innerHTML=`<p class="center-msg">کاربر وجود ندارد</p>`;
+    else if(e.message === "REDIRECT_REGISTER"){
+  return;
+  }
   }
 }
 </script>
