@@ -1,43 +1,21 @@
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script src="auth.js"></script>
-
-<script>
 async function loadProfile(){
   const root = document.getElementById("profile-root");
   const postsEl = document.getElementById("profile-posts");
   const loading = document.getElementById("loading");
 
-  loading.style.display = "block";
-
   const auth = await ensureRegistered();
-
   if (!auth.ok) {
-    loading.style.display = "none";
-
-    if (auth.reason === "NOT_REGISTERED") {
-      location.replace("register.html");
-      return;
-    }
-
-    root.innerHTML = `<p class="center-msg">عدم دسترسی</p>`;
+    loading.style.display="none";
     return;
   }
 
   const targetId =
     new URLSearchParams(location.search).get("user_id") || auth.userId;
 
-  const userRes = await fetch(`${API_BASE}/get_user/${targetId}`);
-  const postsRes = await fetch(`${API_BASE}/get_user_posts/${targetId}`);
+  const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
+  const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
 
-  loading.style.display = "none";
-
-  if (!userRes.ok) {
-    root.innerHTML = `<p class="center-msg">کاربر یافت نشد</p>`;
-    return;
-  }
-
-  const user = await userRes.json();
-  const posts = await postsRes.json();
+  loading.style.display="none";
 
   root.innerHTML = `
     <div class="profile-head">
@@ -53,9 +31,9 @@ async function loadProfile(){
     </div>
   `;
 
-  postsEl.innerHTML = "";
-  posts.forEach(p => {
-    const img = document.createElement("img");
+  postsEl.innerHTML="";
+  posts.forEach(p=>{
+    const img=document.createElement("img");
     img.src = p.photo
       ? `${API_BASE}/media_proxy?file_id=${p.photo}`
       : "https://via.placeholder.com/300";
@@ -63,6 +41,4 @@ async function loadProfile(){
   });
 }
 
-Bale.WebApp.ready();
-loadProfile();
-                </script>
+safeStart(loadProfile);
