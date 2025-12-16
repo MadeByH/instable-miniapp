@@ -104,7 +104,9 @@ async function loadNotifications() {
 <!-- Run -->
 <!-- ============================= -->
 <script>
-safeStart(loadNotifications);
+if (typeof safeStart === "function") {
+  safeStart(loadNotifications);
+}
 </script>
 
 <!-- ============================= -->
