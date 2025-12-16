@@ -1,135 +1,68 @@
-<!doctype html>
-<html lang="fa">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>پروفایل</title>
-<link rel="stylesheet" href="style.css">
-
-<style>
-.profile-head{
-  max-width:720px;
-  margin:18px auto;
-  padding:18px;
-  background:var(--card);
-  border-radius:14px;
-  display:flex;
-  gap:18px;
-}
-.avatar{
-  width:90px;height:90px;border-radius:50%;
-}
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:4px;
-}
-.center-msg{
-  text-align:center;
-  color:#9eb0c8;
-  margin-top:30px;
-}
-</style>
-</head>
-
-<body>
-
-<header class="topbar">
-  <a href="index.html">←</a>
-  <h1>پروفایل</h1>
-</header>
-
-<main>
-  <div id="profile-root"></div>
-  <div id="profile-posts" class="grid"></div>
-  <div id="loading" class="loading">در حال بارگذاری…</div>
-</main>
-
-<div id="nav"></div>
-
-<!-- ============================= -->
-<!-- Config -->
-<!-- ============================= -->
-<script>
-window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-</script>
-
-<!-- ============================= -->
-<!-- Bale Loader -->
-<!-- ============================= -->
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
-
 <script src="auth.js"></script>
 
-<!-- ============================= -->
-<!-- Main Logic -->
-<!-- ============================= -->
 <script>
 async function loadProfile(){
   const root = document.getElementById("profile-root");
   const postsEl = document.getElementById("profile-posts");
   const loading = document.getElementById("loading");
 
-  try{
-    const viewerId = await ensureRegistered();
+  loading.style.display = "block";
 
-    const targetId =
-      new URLSearchParams(location.search).get("user_id") || viewerId;
+  const auth = await ensureRegistered();
 
-    const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
-    const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
+  if (!auth.ok) {
+    loading.style.display = "none";
 
-    loading.style.display="none";
+    if (auth.reason === "NOT_REGISTERED") {
+      location.replace("register.html");
+      return;
+    }
 
-    root.innerHTML = `
-      <div class="profile-head">
-        <img class="avatar" src="${user.profile_pic
-          ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
-          : 'https://via.placeholder.com/90'}">
-        <div>
-          <h3>${user.display_name || "کاربر"}</h3>
-          <p>${user.bio || ""}</p>
-        </div>
+    root.innerHTML = `<p class="center-msg">عدم دسترسی</p>`;
+    return;
+  }
+
+  const targetId =
+    new URLSearchParams(location.search).get("user_id") || auth.userId;
+
+  const userRes = await fetch(`${API_BASE}/get_user/${targetId}`);
+  const postsRes = await fetch(`${API_BASE}/get_user_posts/${targetId}`);
+
+  loading.style.display = "none";
+
+  if (!userRes.ok) {
+    root.innerHTML = `<p class="center-msg">کاربر یافت نشد</p>`;
+    return;
+  }
+
+  const user = await userRes.json();
+  const posts = await postsRes.json();
+
+  root.innerHTML = `
+    <div class="profile-head">
+      <img class="avatar" src="${
+        user.profile_pic
+        ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
+        : 'https://via.placeholder.com/90'
+      }">
+      <div>
+        <h3>${user.display_name}</h3>
+        <p>${user.bio || ""}</p>
       </div>
-    `;
+    </div>
+  `;
 
-    postsEl.innerHTML="";
-    posts.forEach(p=>{
-      const img=document.createElement("img");
-      img.src = p.photo
-        ? `${API_BASE}/media_proxy?file_id=${p.photo}`
-        : "https://via.placeholder.com/300";
-      postsEl.appendChild(img);
-    });
-
-  }catch(e){
-    loading.style.display="none";
-    if(e.message==="NOT_IN_BALE")
-      root.innerHTML=`<p class="center-msg">این صفحه فقط داخل بله قابل استفاده است</p>`;
-    else if(e.message === "REDIRECT_REGISTER"){
-  return;
-  }
-  }
+  postsEl.innerHTML = "";
+  posts.forEach(p => {
+    const img = document.createElement("img");
+    img.src = p.photo
+      ? `${API_BASE}/media_proxy?file_id=${p.photo}`
+      : "https://via.placeholder.com/300";
+    postsEl.appendChild(img);
+  });
 }
-</script>
 
-<!-- ============================= -->
-<!-- Run -->
-<!-- ============================= -->
-<script>
-if (typeof safeStart === "function") {
-  safeStart(loadProfile);
-  }
-</script>
-
-<!-- ============================= -->
-<!-- Nav -->
-<!-- ============================= -->
-<script>
-fetch("nav.html")
-  .then(r=>r.text())
-  .then(html=>document.getElementById("nav").innerHTML=html);
-</script>
-
-</body>
-</html>
+Bale.WebApp.ready();
+loadProfile();
+                </script>
