@@ -34,6 +34,27 @@ window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 </script>
 
 <script>
+function safeStart(fn) {
+  let started = false;
+
+  function start() {
+    if (started) return;
+    started = true;
+    fn();
+  }
+
+  // تلاش اول
+  setTimeout(start, 200);
+
+  // تلاش دوم (برای WebView بله)
+  setTimeout(start, 800);
+
+  // تلاش سوم (برای گوشی‌های ضعیف‌تر)
+  setTimeout(start, 1500);
+}
+</script>
+
+<script>
 async function loadNotifications(){
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
@@ -64,7 +85,9 @@ async function loadNotifications(){
   }
 }
 
-document.addEventListener("DOMContentLoaded", loadNotifications);
+<script>
+safeStart(loadNotifications);
+</script>
 
 fetch("nav.html")
   .then(r => r.text())
