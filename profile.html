@@ -117,7 +117,9 @@ async function loadProfile(){
 <!-- Run -->
 <!-- ============================= -->
 <script>
-safeStart(loadProfile);
+if (typeof safeStart === "function") {
+  safeStart(loadProfile);
+  }
 </script>
 
 <!-- ============================= -->
