@@ -122,10 +122,12 @@ async function loadNotifications() {
   if (document.getElementById("error-display")) document.getElementById("error-display").style.display = "none";
 
 
+  // ... (بخش‌های اولیه)
+
   try {  
     const result = await ensureRegistered();  
         
-    if (typeof result === 'object' && result !== null && !result.ok) {
+    if (result.ok === false) { // این بخش مدیریت شیء‌های خطا را انجام می‌دهد
         const reason = result.reason;
             
         if (reason === "NOT_IN_BALE") {
@@ -134,12 +136,18 @@ async function loadNotifications() {
              displayMessage("خطا در دریافت شناسه کاربری از بله.", true);
         } else if (reason === "API_ERROR") {
              displayMessage("خطا در ارتباط با سرور برای تایید ثبت نام.", true);
+        } else if (reason === "REDIRECT_REGISTER") {
+            // این مورد نباید اینجا اجرا شود چون location.replace قبلاً فراخوانی شده
+            displayMessage("در حال انتقال به صفحه ثبت نام...", false); 
+            return;
         }
         if (loading) loading.style.display = "none";
         return;
     }
         
-    const userId = result; 
+    const userId = result.userId; // اکنون userId را از شیء نتیجه استخراج می‌کنیم
+    // ... (ادامه کد برای بارگذاری اعلان‌ها)
+  
     // پیام لودینگ در این مرحله برداشته می‌شود و پیام اصلی نمایش داده می‌شود
     // displayMessage(`در حال بارگذاری اعلان‌ها برای کاربر ${userId}...`, false);
 
