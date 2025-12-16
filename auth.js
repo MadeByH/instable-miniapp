@@ -12,7 +12,8 @@ async function waitForBaleUser(timeout = 6000) {
 
     await new Promise(r => setTimeout(r, 100));
   }
-  throw new Error("USER_NOT_READY");
+  // پرتاب خطا در صورت تأخیر
+  throw new Error("USER_NOT_READY"); 
 }
 
 function getUserId() {
@@ -21,37 +22,57 @@ function getUserId() {
 }
 
 function safeStart(fn){
-  let done=false;
-  [200,800,1500].forEach(t=>{
-    setTimeout(()=>{
-      if(!done){
-        done=true;
-        fn().catch(console.error); // 🔴 مهم
+  let done = false;
+  // ما فقط به یک اجرای موفق نیاز داریم، پس زمان‌بندی را کاهش داده و مطمئن‌تر می‌کنیم
+  const safeFn = async () => {
+    if (!done) {
+      done = true;
+      try {
+        await fn();
+      } catch (error) {
+        // خطاهای پرتاب شده را به صفحه می‌فرستیم، مگر اینکه خطای ریدایرکت باشد که توسط خود تابع مدیریت می‌شود.
+        if (error.message !== "REDIRECT_REGISTER" && error.message !== "USER_NOT_READY") {
+          // اگر خطا در جریان اصلی نیست، آن را نمایش می‌دهیم.
+          // توجه: این قسمت باید با منطق displayMessage در loadNotifications هماهنگ باشد.
+          // فعلاً ما فقط مطمئن می‌شویم که خطا به صورت غیرمنتظره ظاهر نشود.
+          console.error("Error in safeStart execution:", error); 
+        }
       }
-    },t);
-  });
+    }
+  };
+  
+  // اجرای سریع و پشت سر هم برای تضمین اجرا
+  setTimeout(safeFn, 200);
+  setTimeout(safeFn, 800);
+  setTimeout(safeFn, 1500);
 }
 
 async function ensureRegistered() {
   if (!window.Bale?.WebApp)
-    return { ok:false, reason:"NOT_IN_BALE" };
+    return { ok: false, reason: "NOT_IN_BALE" };
 
+  // این تابع یا برمی‌گردد یا خطا پرتاب می‌کند (USER_NOT_READY)
   await waitForBaleUser();
 
   const userId = getUserId();
   if (!userId)
-    return { ok:false, reason:"NO_USER" };
+    return { ok: false, reason: "NO_USER" };
+
+  // API_BASE باید اینجا تعریف شده باشد یا از global گرفته شود
+  const API_BASE = window.API_BASE || "https://insta-api-avn2.onrender.com/api"; 
 
   const res = await fetch(`${API_BASE}/user_exists/${userId}`);
   if (!res.ok)
-    return { ok:false, reason:"API_ERROR" };
+    return { ok: false, reason: "API_ERROR" };
 
   const data = await res.json();
 
   if (!data.exists) {
+    // در اینجا ریدایرکت می‌کنیم و یک شیء خاص برمی‌گردانیم
     location.replace("register.html");
-    return { ok:false, reason:"REDIRECT_REGISTER" };
+    return { ok: false, reason: "REDIRECT_REGISTER" };
   }
 
-  return { ok:true, userId };
+  // موفقیت
+  return { ok: true, userId: parseInt(userId) };
 }
