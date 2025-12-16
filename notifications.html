@@ -46,57 +46,6 @@ window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 <!-- ============================= -->
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
 
-<!-- ============================= -->
-<!-- Helpers -->
-<!-- ============================= -->
-<script>
-async function waitForBaleUser(timeout = 6000) {
-  const start = Date.now();
-
-  while (Date.now() - start < timeout) {
-    if (
-      window.Bale &&
-      window.Bale.WebApp &&
-      window.Bale.WebApp.initDataUnsafe &&
-      (
-        window.Bale.WebApp.initDataUnsafe.user?.id ||
-        window.Bale.WebApp.initDataUnsafe.user_id ||
-        window.Bale.WebApp.initDataUnsafe.receiver?.id
-      )
-    ) {
-      return true;
-    }
-    await new Promise(r => setTimeout(r, 100));
-  }
-
-  throw new Error("USER_NOT_READY");
-}
-
-function getUserId() {
-  const data = window.Bale.WebApp.initDataUnsafe;
-
-  return (
-    data.user?.id ||
-    data.user_id ||
-    data.receiver?.id ||
-    null
-  );
-}
-
-function safeStart(fn) {
-  let started = false;
-  function start() {
-    if (started) return;
-    started = true;
-    fn();
-  }
-
-  setTimeout(start, 200);
-  setTimeout(start, 800);
-  setTimeout(start, 1500);
-}
-</script>
-
 <script src="auth.js"></script>
 
 <!-- ============================= -->
