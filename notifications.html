@@ -21,6 +21,15 @@
   color:#9eb0c8;  
   margin-top:30px;  
 }  
+/* استایل برای پیام‌های خطا در صفحه */
+#error-display {
+    text-align: center;
+    color: #ff4444; /* رنگ قرمز برای خطا */
+    margin-top: 30px;
+    padding: 15px;
+    border: 1px solid #ff4444;
+    background-color: rgba(255, 68, 68, 0.1);
+}
 </style>  
 </head>  
   
@@ -31,6 +40,7 @@
 </header>  
   
 <main id="notifRoot"></main>  
+<div id="error-display" style="display: none;"></div> <!-- عنصر جدید برای نمایش خطاها -->
 <div id="loading" class="loading">در حال بارگذاری…</div>  
 <div id="nav"></div>  
   
@@ -48,13 +58,6 @@ window.API_BASE = "https://insta-api-avn2.onrender.com/api";
   
 <script src="auth.js"></script>
 
-// --- تنظیمات اولیه (باید قبلاً تعریف شده باشند) ---
-// این خط در HTML شما هست، اما برای اطمینان دوباره تعریف می‌شود
-// window.API_BASE = "https://insta-api-avn2.onrender.com/api"; 
-
-// ---------------------------------------------------------------------
-// 1. تابع کمکی برای تزریق مستقیم پیام‌ها در صفحه (جایگزین console.log/error)
-// ---------------------------------------------------------------------
 <!-- ============================= -->  
 <!-- Main Logic -->  
 <!-- ============================= -->  
@@ -64,7 +67,8 @@ function displayMessage(message, isError = false) {
     const errorBox = document.getElementById("error-display");
     
     if (!root) {
-        console.log("Root element not found. Message:", message, isError ? "(ERROR)" : "(INFO)");
+        // اگر هیچ عنصری پیدا نشد، لاگ کنسول تنها راه باقی‌مانده است (که طبق درخواست باید حذف شود، اما به عنوان fallback باقی می‌ماند)
+        if (isError) console.error("Root element not found. Error:", message);
         return;
     }
 
@@ -74,6 +78,7 @@ function displayMessage(message, isError = false) {
         root.innerHTML = ''; 
     } else {
         if (errorBox) errorBox.style.display = "none";
+        // استفاده از کلاس center-msg برای پیام‌های موفقیت/اطلاعاتی
         root.innerHTML = `<p class="${isError ? 'error-msg' : 'center-msg'}">${message}</p>`;
     }
 }
@@ -135,7 +140,8 @@ async function loadNotifications() {
     }
         
     const userId = result; 
-    displayMessage(`در حال بارگذاری اعلان‌ها برای کاربر ${userId}...`, false);
+    // پیام لودینگ در این مرحله برداشته می‌شود و پیام اصلی نمایش داده می‌شود
+    // displayMessage(`در حال بارگذاری اعلان‌ها برای کاربر ${userId}...`, false);
 
     const res = await fetch(`${window.API_BASE}/notifications/${userId}?limit=50`);
 
@@ -154,9 +160,11 @@ async function loadNotifications() {
         data.forEach(n => {  
             const div = document.createElement("div");  
             div.className = "notif";  
+            // اطمینان از وجود created_at
+            const timestamp = n.created_at || "زمان نامشخص";
             div.innerHTML = `  
                 <div>${n.text}</div>  
-                <div class="notif-time">${n.created_at}</div>  
+                <div class="notif-time">${timestamp}</div>  
             `;  
             root.appendChild(div);  
         });  
@@ -171,6 +179,7 @@ async function loadNotifications() {
     } else if (e.message === "USER_NOT_READY") {
          displayMessage("دریافت اطلاعات بله با تأخیر مواجه شد. لطفا مجدداً بارگذاری نمایید.", true);
     } else {  
+        // این تنها جایی است که پیام خطا به صورت عمومی نمایش داده می‌شود
         displayMessage("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"), true);
     }
   } finally {  
@@ -183,9 +192,13 @@ async function loadNotifications() {
 <!-- Run -->  
 <!-- ============================= -->  
 <script>  
+// فرض بر این است که تابع safeStart در auth.js تعریف شده است
 if (typeof safeStart === "function") {  
   safeStart(loadNotifications);  
-}  
+} else {
+  // اگر safeStart وجود نداشت، مستقیماً loadNotifications را اجرا کنید
+  loadNotifications();
+}
 </script>  
   
 <!-- ============================= -->  
