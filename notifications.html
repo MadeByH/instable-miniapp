@@ -1,122 +1,53 @@
-<!doctype html>
-<html lang="fa">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>اعلان‌ها</title>
-<link rel="stylesheet" href="style.css">
-
-<style>
-.notif{
-  padding:14px;
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-.notif-time{
-  font-size:12px;
-  color:#8aa0b8;
-  margin-top:4px;
-}
-.center-msg{
-  text-align:center;
-  color:#9eb0c8;
-  margin-top:30px;
-}
-</style>
-</head>
-
-<body>
-
-<header class="topbar">
-  <h1>اعلان‌ها</h1>
-</header>
-
-<main id="notifRoot"></main>
-<div id="loading" class="loading">در حال بارگذاری…</div>
-<div id="nav"></div>
-
-<!-- ============================= -->
-<!-- تنظیمات -->
-<!-- ============================= -->
-<script>
-window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-</script>
-
-<!-- ============================= -->
-<!-- Bale Loader -->
-<!-- ============================= -->
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
-
 <script src="auth.js"></script>
 
-<!-- ============================= -->
-<!-- Main Logic -->
-<!-- ============================= -->
 <script>
 async function loadNotifications() {
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
 
-  try {
-    const userId = await ensureRegistered();
-    // 4️⃣ گرفتن اعلان‌ها
-    const res = await fetch(`${API_BASE}/notifications/${userId}`);
-    if (!res.ok) throw new Error("API_ERROR");
+  loading.style.display = "block";
 
-    const data = await res.json();
+  const auth = await ensureRegistered();
+
+  if (!auth.ok) {
     loading.style.display = "none";
 
-    // 5️⃣ اعلان ندارد
-    if (!Array.isArray(data) || data.length === 0) {
-      root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
+    if (auth.reason === "NOT_REGISTERED") {
+      location.replace("register.html");
       return;
     }
 
-    // 6️⃣ نمایش اعلان‌ها
-    data.forEach(n => {
-      const div = document.createElement("div");
-      div.className = "notif";
-      div.innerHTML = `
-        <div>${n.text}</div>
-        <div class="notif-time">${n.created_at}</div>
-      `;
-      root.appendChild(div);
-    });
-
-  } catch (e) {
-    loading.style.display = "none";
-
-    if (e.message === "NOT_IN_BALE") {
-      root.innerHTML = `<p class="center-msg">این صفحه فقط داخل بله قابل استفاده است</p>`;
-    } 
-    else if (e.message === "REDIRECT_REGISTER") {
-  return;
+    root.innerHTML = `<p class="center-msg">عدم دسترسی</p>`;
+    return;
   }
-    else {
-      root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها</p>`;
-    }
 
-    console.error("Notifications error:", e.message);
+  const res = await fetch(`${API_BASE}/notifications/${auth.userId}`);
+  loading.style.display = "none";
+
+  if (!res.ok) {
+    root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها</p>`;
+    return;
   }
+
+  const data = await res.json();
+
+  if (!data.length) {
+    root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
+    return;
+  }
+
+  data.forEach(n => {
+    const div = document.createElement("div");
+    div.className = "notif";
+    div.innerHTML = `
+      <div>${n.text}</div>
+      <div class="notif-time">${n.created_at}</div>
+    `;
+    root.appendChild(div);
+  });
 }
-</script>
 
-<!-- ============================= -->
-<!-- Run -->
-<!-- ============================= -->
-<script>
-if (typeof safeStart === "function") {
-  safeStart(loadNotifications);
-}
-</script>
-
-<!-- ============================= -->
-<!-- Navigation -->
-<!-- ============================= -->
-<script>
-fetch("nav.html")
-  .then(r => r.text())
-  .then(html => document.getElementById("nav").innerHTML = html);
-</script>
-
-</body>
-</html>
+Bale.WebApp.ready();
+loadNotifications();
+    </script>
