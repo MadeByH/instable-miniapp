@@ -20,44 +20,35 @@ function getUserId() {
   return d.user?.id || d.user_id || d.receiver?.id || null;
 }
 
-function safeStart(fn){
-  let done=false;
-  [200,800,1500].forEach(t=>{
-    setTimeout(()=>{
-      if(!done){ done=true; fn(); }
-    },t);
-  });
-}
-
+/**
+ * فقط وضعیت کاربر را برمی‌گرداند
+ * ❌ redirect ندارد
+ * ❌ throw ندارد
+ */
 async function ensureRegistered() {
-  if (!window.Bale || !window.Bale.WebApp) {
-    throw new Error("NOT_IN_BALE");
-  }
+  if (!window.Bale?.WebApp)
+    return { ok:false, reason:"NOT_IN_BALE" };
 
   await waitForBaleUser();
 
   const userId = getUserId();
-  if (!userId) {
-    throw new Error("NO_USER");
-  }
+  if (!userId)
+    return { ok:false, reason:"NO_USER" };
 
   let res;
   try {
     res = await fetch(`${API_BASE}/user_exists/${userId}`);
   } catch {
-    throw new Error("API_DOWN");
+    return { ok:false, reason:"API_DOWN" };
   }
 
-  if (!res.ok) {
-    throw new Error("API_ERROR");
-  }
+  if (!res.ok)
+    return { ok:false, reason:"API_ERROR" };
 
   const data = await res.json();
 
-  if (!data.exists) {
-    location.href = "register.html";
-    throw new Error("REDIRECT_REGISTER");
-  }
+  if (!data.exists)
+    return { ok:false, reason:"NOT_REGISTERED" };
 
-  return userId;
+  return { ok:true, userId };
 }
