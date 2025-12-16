@@ -29,10 +29,12 @@
 <div id="loading" class="loading">در حال بارگذاری…</div>
 <div id="nav"></div>
 
+<!-- API -->
 <script>
 window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 </script>
 
+<!-- Safe Start -->
 <script>
 function safeStart(fn) {
   let started = false;
@@ -43,17 +45,13 @@ function safeStart(fn) {
     fn();
   }
 
-  // تلاش اول
   setTimeout(start, 200);
-
-  // تلاش دوم (برای WebView بله)
   setTimeout(start, 800);
-
-  // تلاش سوم (برای گوشی‌های ضعیف‌تر)
   setTimeout(start, 1500);
 }
 </script>
 
+<!-- Logic -->
 <script>
 async function loadNotifications(){
   const root = document.getElementById("notifRoot");
@@ -84,10 +82,11 @@ async function loadNotifications(){
     loading.textContent = "خطا در دریافت اعلان‌ها";
   }
 }
+</script>
 
+<!-- Start -->
 <script>
 safeStart(loadNotifications);
-</script>
 
 fetch("nav.html")
   .then(r => r.text())
