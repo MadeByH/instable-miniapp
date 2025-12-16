@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <title>Notifications</title>
   <style>
@@ -46,7 +45,7 @@
   <script src="auth.js"></script>
   
   <script>
-    const API_BASE = "https://insta-api-avn2.onrender.com/api"; // یا هر آدرس API شما
+    const API_BASE = "https://insta-api-avn2.onrender.com/api"; 
 
     async function loadNotifications() {
       const root = document.getElementById("notifRoot");
@@ -54,21 +53,26 @@
 
       try {
         const auth = await ensureRegistered();
+        console.log("auth.ok:", auth.ok); // ⬅️ تست ۱
 
         if (!auth.ok) {
           loading.style.display = "none";
-          return; // ⬅️ مهم
+          // اگر به اینجا رسیدید، یعنی auth.ok: false و یا ریدایرکت رخ نداده یا ریدایرکت منجر به توقف نشده.
+          // شاید دلیلش NO_USER یا NOT_IN_BALE باشه که نباید ریدایرکت کنه.
+          root.innerHTML = `<p class="center-msg">خطای احراز هویت یا عدم وجود کاربر: ${auth.reason}</p>`;
+          return; 
         }
 
         const res = await fetch(`${API_BASE}/notifications/${auth.userId}`);
         loading.style.display = "none";
 
         if (!res.ok) {
-          root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها</p>`;
+          root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها (Status: ${res.status})</p>`;
           return;
         }
 
         const data = await res.json();
+        console.log("data:", data); // ⬅️ تست ۲
 
         if (!data.length) {
           root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
@@ -85,7 +89,7 @@
           root.appendChild(div);
         });
       } catch (e) {
-        console.error("Error:", e);
+        console.error("Error:", e); // ⬅️ تست ۳ (برای USER_NOT_READY یا خطاهای دیگر)
         displayError("متاسفیم! خطایی رخ داده: " + e.message);
       }
     }
@@ -108,5 +112,4 @@
     safeStart(loadNotifications);
   </script>
 </body>
-
 </html>
