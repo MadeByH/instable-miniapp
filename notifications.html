@@ -1,37 +1,75 @@
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-<script src="app.js"></script>
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اعلان‌ها</title>
+<link rel="stylesheet" href="style.css">
+
+<style>
+.notif{
+  padding:14px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.notif-time{
+  font-size:12px;
+  color:#8aa0b8;
+  margin-top:4px;
+}
+</style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <h1>اعلان‌ها</h1>
+</header>
+
+<main id="notifRoot"></main>
+<div id="loading" class="loading">در حال بارگذاری…</div>
+<div id="nav"></div>
+
 <script>
 window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+</script>
 
-(async () => {
+<script>
+async function loadNotifications(){
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
 
-  let uid;
   try {
-    uid = getUserId();
-  } catch {
-    loading.textContent = "اعلان‌ها فقط داخل بله قابل مشاهده‌اند";
-    return;
-  }
+    const res = await fetch(`${API_BASE}/notifications/1`);
+    const data = await res.json();
 
-  try {
-    const data = await apiGet(`/notifications/${uid}`);
     loading.style.display = "none";
 
-    if (!data.length) {
-      root.innerHTML = "اعلانی وجود ندارد";
+    if(!Array.isArray(data) || data.length === 0){
+      root.innerHTML = "<p style='text-align:center'>اعلانی وجود ندارد</p>";
       return;
     }
 
     data.forEach(n => {
       const div = document.createElement("div");
-      div.className = "notif" + (n.is_read ? "" : " unread");
-      div.innerHTML = `<div>${n.text}</div>`;
+      div.className = "notif";
+      div.innerHTML = `
+        <div>${n.text}</div>
+        <div class="notif-time">${n.created_at}</div>
+      `;
       root.appendChild(div);
     });
-  } catch {
+
+  } catch (e){
     loading.textContent = "خطا در دریافت اعلان‌ها";
   }
-})();
+}
+
+document.addEventListener("DOMContentLoaded", loadNotifications);
+
+fetch("nav.html")
+  .then(r => r.text())
+  .then(html => document.getElementById("nav").innerHTML = html);
 </script>
+
+</body>
+</html>
