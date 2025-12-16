@@ -2,49 +2,11 @@
 // Bale MiniApp – Stable Version
 // ===============================
 
-// ---------- Bale helpers ----------
-function getUserId() {
-  const data = window.Bale?.WebApp?.initDataUnsafe;
-
-  const uid =
-    data?.user?.id ||
-    data?.user_id ||
-    data?.receiver?.id;
-
-  if (!uid) {
-    throw new Error("BALE_USER_NOT_READY");
-  }
-
-  return uid;
-}
-
 // ---------- API ----------
 async function apiGet(path) {
   const res = await fetch(window.API_BASE + path);
   if (!res.ok) throw new Error("API_ERROR");
   return res.json();
-}
-
-async function waitForBaleUser(timeout = 5000) {
-  const start = Date.now();
-
-  while (Date.now() - start < timeout) {
-    if (
-      window.Bale &&
-      window.Bale.WebApp &&
-      window.Bale.WebApp.initDataUnsafe &&
-      (
-        window.Bale.WebApp.initDataUnsafe.user?.id ||
-        window.Bale.WebApp.initDataUnsafe.user_id ||
-        window.Bale.WebApp.initDataUnsafe.receiver?.id
-      )
-    ) {
-      return true;
-    }
-    await new Promise(r => setTimeout(r, 100));
-  }
-
-  throw new Error("BALE_USER_TIMEOUT");
 }
 
 // ---------- UI ----------
