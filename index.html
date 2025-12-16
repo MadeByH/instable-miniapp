@@ -29,7 +29,7 @@
 
   fetch("nav.html")
     .then(r => r.text())
-    .then(html => nav.innerHTML = html);
+    .then(html => document.getElementById("nav").innerHTML = html);
 </script>
 
 </body>
