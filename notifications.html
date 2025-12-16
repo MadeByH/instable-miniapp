@@ -5,115 +5,69 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>اعلان‌ها</title>
 <link rel="stylesheet" href="style.css">
-
-<style>
-.notif{
-  padding:14px;
-  border-bottom:1px solid rgba(255,255,255,.06);
-}
-.notif.unread{
-  background:rgba(120,160,255,.08);
-}
-.notif-time{
-  font-size:12px;
-  color:#8aa0b8;
-  margin-top:4px;
-}
-.debug{
-  font-size:12px;
-  opacity:.8;
-  padding:4px 0;
-}
-</style>
 </head>
 
 <body>
-
 <header class="topbar">
   <h1>اعلان‌ها</h1>
 </header>
 
 <main id="notifRoot"></main>
 <div id="loading" class="loading">در حال بارگذاری…</div>
-<div id="nav"></div>
 
-<!-- 1️⃣ لودر رسمی بله -->
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
-
-<!-- 2️⃣ تنظیم API -->
-<script>
-window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-</script>
-
-<!-- 3️⃣ app.js -->
 <script src="app.js"></script>
 
-<!-- 4️⃣ منطق صفحه (بعد از DOM آماده) -->
 <script>
-document.addEventListener("DOMContentLoaded", () => {
+window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-  const root = document.getElementById("notifRoot");
-  const loading = document.getElementById("loading");
+const root = document.getElementById("notifRoot");
+const loading = document.getElementById("loading");
 
-  function log(msg){
-    const d = document.createElement("div");
-    d.className = "debug";
-    d.textContent = msg;
-    root.appendChild(d);
+// ⛔ اگر اصلاً داخل بله نیستیم
+if (!window.Bale || !window.Bale.WebApp) {
+  loading.style.display = "none";
+  root.innerHTML = "اعلان‌ها فقط داخل اپلیکیشن بله قابل مشاهده هستند";
+  throw new Error("NOT_IN_BALE");
+}
+
+// ✅ داخل بله هستیم → صبر می‌کنیم ready شود
+Bale.WebApp.ready(async () => {
+  let uid;
+
+  try {
+    uid = getUserId();
+  } catch (e) {
+    loading.style.display = "none";
+    root.innerHTML = "در حال دریافت اطلاعات کاربر… لطفاً کمی صبر کنید";
+    return;
   }
 
-  async function initNotifications(){
-    log("STEP 1: DOM آماده شد");
+  try {
+    const data = await apiGet(`/notifications/${uid}`);
+    loading.style.display = "none";
 
-    try {
-      log("STEP 2: waitForBaleUser()");
-      await waitForBaleUser();
-
-      log("STEP 3: getUserId()");
-      const uid = getUserId();
-      log("userId = " + uid);
-
-      log("STEP 4: fetch notifications");
-      const res = await fetch(`${API_BASE}/notifications/${uid}`);
-      log("HTTP status = " + res.status);
-
-      let data;
-      try {
-        data = await res.json();
-      } catch {
-        throw new Error("INVALID_JSON");
-      }
-
-      loading.style.display = "none";
-
-      if (!Array.isArray(data) || data.length === 0) {
-        root.innerHTML += "<p>اعلانی وجود ندارد</p>";
-        return;
-      }
-
-      data.forEach(n => {
-        const div = document.createElement("div");
-        div.className = "notif" + (n.is_read ? "" : " unread");
-        div.innerHTML = `
-          <div>${n.text}</div>
-          <div class="notif-time">${n.created_at}</div>
-        `;
-        root.appendChild(div);
-      });
-
-    } catch (e) {
-      loading.style.display = "none";
-      root.innerHTML += `<p style="color:red">❌ ${e.message}</p>`;
+    if (!data.length) {
+      root.innerHTML = "اعلانی وجود ندارد";
+      return;
     }
+
+    data.forEach(n => {
+      const div = document.createElement("div");
+      div.className = "notif" + (n.is_read ? "" : " unread");
+      div.innerHTML = `
+        <div>${n.text}</div>
+        <div class="notif-time">${n.created_at}</div>
+      `;
+      root.appendChild(div);
+    });
+
+  } catch (e) {
+    loading.style.display = "none";
+    root.innerHTML = "خطا در دریافت اعلان‌ها";
+    console.error(e);
   }
-
-  initNotifications();
-
-  fetch("nav.html")
-    .then(r => r.text())
-    .then(html => document.getElementById("nav").innerHTML = html);
 });
 </script>
-
 </body>
 </html>
