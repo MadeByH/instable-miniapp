@@ -1,80 +1,146 @@
-  <script>
-    const API_BASE = "https://insta-api-avn2.onrender.com/api"; 
+// --- تنظیمات اولیه (باید قبلاً تعریف شده باشند) ---
+const API_BASE = "https://insta-api-avn2-onrender.com/api"; // جایگزین شود با آدرس واقعی API
+// فرض بر وجود توابع: getUserId(), waitForBaleUser()
 
-    async function loadNotifications() {
-      const root = document.getElementById("notifRoot");
-      const loading = document.getElementById("loading");
-      loading.style.display = "block"; // مطمئن می‌شویم لودینگ نمایش داده شود
+// ---------------------------------------------------------------------
+// 1. تابع کمکی جدید برای تزریق مستقیم پیام‌ها در صفحه (جایگزین console.log/error)
+// ---------------------------------------------------------------------
+function displayMessage(message, isError = false) {
+    const root = document.getElementById("notifRoot");
+    const errorBox = document.getElementById("error-display");
+    
+    if (!root) {
+        // اگر ریشه اصلی وجود نداشت، کنسول را برای دیباگ نهایی استفاده می‌کنیم (تنها نقطه ضعف)
+        console.log("Root element not found. Message:", message, isError ? "(ERROR)" : "(INFO)");
+        return;
+    }
 
-      try {
-        // 1. تغییر اصلی: ensureRegistered اکنون مستقیماً userId یا خطا پرتاب می‌کند.
-        const userId = await ensureRegistered();
-        console.log("Received userId:", userId); // ⬅️ تست ۱ جدید: اکنون باید عدد کاربر را ببینید
+    // اگر پیام خطا باشد و باکس خطا وجود داشته باشد، در آنجا نمایش می‌دهیم.
+    if (isError && errorBox) {
+        errorBox.innerText = message;
+        errorBox.style.display = "block";
+        root.innerHTML = ''; // محتوای اصلی را پاک می‌کنیم
+    } else {
+        // در غیر این صورت، پیام را در محتوای اصلی نمایش می‌دهیم و باکس خطا را پنهان می‌کنیم.
+        if (errorBox) errorBox.style.display = "none";
+        root.innerHTML = `<p class="${isError ? 'error-msg' : 'center-msg'}">${message}</p>`;
+    }
+}
 
-        // اگر ensureRegistered خطا ندهد (یعنی کاربر موجود است و ثبت شده است)، userId را برمی‌گرداند.
+// ---------------------------------------------------------------------
+// 2. تغییر در ensureRegistered: بازگشت شیء در صورت خطا (به جز ریدایرکت)
+// ---------------------------------------------------------------------
+async function ensureRegistered() {
+    if (!window.Bale?.WebApp)
+        // کاربر داخل بله نیست
+        return { ok: false, reason: "NOT_IN_BALE" }; 
 
-        const res = await fetch(`${API_BASE}/notifications/${userId}`);
-        loading.style.display = "none";
+    await waitForBaleUser();
+
+    const userId = getUserId();
+    if (!userId)
+        // شناسه کاربری از بله دریافت نشده
+        return { ok: false, reason: "NO_USER" }; 
+
+    const res = await fetch(`${API_BASE}/user_exists/${userId}`);
+    if (!res.ok)
+        // خطای API هنگام بررسی وجود کاربر
+        return { ok: false, reason: "API_ERROR" }; 
+
+    const data = await res.json();
+
+    if (!data.exists) {
+        // کاربر ثبت‌نام نکرده است: ریدایرکت اجباری است
+        location.replace("register.html");
+        // پرتاب خطا برای توقف فوری و مدیریت ریدایرکت در catch
+        throw new Error("REDIRECT_REGISTER"); 
+    }
+
+    // موفقیت: شناسه کاربری را برمی‌گردانیم
+    return parseInt(userId);
+}
+
+// ---------------------------------------------------------------------
+// 3. بازنویسی loadNotifications برای مدیریت خروجی‌های جدید
+// ---------------------------------------------------------------------
+async function loadNotifications() {
+    const root = document.getElementById("notifRoot");
+    const loading = document.getElementById("loading");
+    
+    if (loading) loading.style.display = "block"; 
+    if (root) root.innerHTML = ''; 
+    if (document.getElementById("error-display")) document.getElementById("error-display").style.display = "none";
+
+
+    try {
+        const result = await ensureRegistered();
+        
+        // اگر result یک شیء خطا بود (و نه عدد userId)
+        if (typeof result === 'object' && result !== null && !result.ok) {
+            const reason = result.reason;
+            
+            // این خطاها ریدایرکت نکردند، پس باید در صفحه نمایش داده شوند
+            if (reason === "NOT_IN_BALE") {
+                displayMessage("این سرویس فقط درون اپلیکیشن بله قابل دسترسی است.", true);
+            } else if (reason === "NO_USER") {
+                 displayMessage("خطا در دریافت شناسه کاربری از بله.", true);
+            } else if (reason === "API_ERROR") {
+                 displayMessage("خطا در ارتباط با سرور برای تایید ثبت نام.", true);
+            }
+            if (loading) loading.style.display = "none";
+            return;
+        }
+        
+        // اگر موفق بود، result همان userId (عدد) است
+        const userId = result; 
+        displayMessage(`در حال بارگذاری اعلان‌ها برای کاربر ${userId}...`, false); // نمایش موقت موفقیت در ریشه
+
+        // --- منطق اصلی دریافت و نمایش اعلان‌ها ---
+        const res = await fetch(`${API_BASE}/notifications/${userId}?limit=50`);
 
         if (!res.ok) {
-          root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها (Status: ${res.status})</p>`;
-          return;
+            displayMessage(`خطا در دریافت اعلان‌ها (Status: ${res.status})`, true);
+            if (loading) loading.style.display = "none";
+            return;
         }
 
         const data = await res.json();
-        console.log("data:", data); // ⬅️ تست ۲
 
         if (!data.length) {
-          root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
-          return;
+            displayMessage("شما هیچ اعلان جدیدی ندارید.");
+        } else {
+            // نمایش لیست اعلان‌ها
+            root.innerHTML = ''; // پاک کردن پیام موقت
+            data.forEach(n => {
+                const div = document.createElement("div");
+                div.className = "notif";
+                div.innerHTML = `
+                    <div>${n.text}</div>
+                    <div class="notif-time">${n.created_at}</div>
+                `;
+                root.appendChild(div);
+            });
         }
 
-        data.forEach(n => {
-          const div = document.createElement("div");
-          div.className = "notif";
-          // توجه: فرمت زمان را بهتر است از سرور برای نمایش تمیزتر دریافت کنید یا از توابع JS برای فرمت‌دهی استفاده کنید.
-          // فعلا همانطور که از API آمده نمایش داده می‌شود.
-          div.innerHTML = `
-            <div>${n.text}</div>
-            <div class="notif-time">${n.created_at}</div>
-          `;
-          root.appendChild(div);
-        });
-      } catch (e) {
-        loading.style.display = "none"; // لودینگ را در صورت خطا پنهان کنید
-        console.error("Error:", e); // ⬅️ تست ۳ (برای USER_NOT_READY یا خطاهای دیگر)
+    } catch (e) {
+        // مدیریت خطاهای پرتاب شده: REDIRECT_REGISTER یا USER_NOT_READY
+        if (loading) loading.style.display = "none";
         
-        // مدیریت خطاهای خاصی که از auth.js می‌آیند (مثل NOT_IN_BALE یا REDIRECT_REGISTER)
-        if (e.message === "NOT_IN_BALE") {
-            root.innerHTML = `<p class="center-msg">این صفحه فقط داخل بله قابل استفاده است</p>`;
-        } else if (e.message === "REDIRECT_REGISTER") {
-            // اگر خطا REDIRECT_REGISTER باشد، یعنی location.href در auth.js کار کرده است.
-            // در این صورت، نیازی به نمایش چیزی نیست زیرا صفحه باید ریدایرکت شده باشد.
-            // اگر به اینجا رسیدید، یعنی ریدایرکت کار نکرده و باید دلیل آن را بررسی کرد.
-            root.innerHTML = `<p class="center-msg">به صفحه ثبت نام هدایت می‌شوید...</p>`;
-            return; // توقف اجرای نمایش محتوا
+        if (e.message === "REDIRECT_REGISTER") {
+            // این حالت نباید در صفحه نمایش داده شود، چون ریدایرکت اتفاق افتاده است.
+            // اما برای اطمینان در صورت شکست ریدایرکت، یک پیام نمایش می‌دهیم.
+            displayMessage("در حال انتقال به صفحه ثبت نام...", false);
+            return; // اجرای تابع متوقف شده است.
         } else if (e.message === "USER_NOT_READY") {
-             root.innerHTML = `<p class="center-msg">کاربر هنوز آماده نیست، لطفا کمی صبر کنید و مجدداً تلاش کنید.</p>`;
-        } 
-        else {
-            displayError("خطای عمومی در دریافت اعلان‌ها: " + e.message);
+             displayMessage("دریافت اطلاعات بله با تأخیر مواجه شد. لطفا مجدداً بارگذاری نمایید.", true);
+        } else {
+            // برای هر خطای غیرمنتظره دیگر که از try/catch می‌آید.
+            displayMessage("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"), true);
         }
-      }
+    } finally {
+        if (loading) loading.style.display = "none";
     }
+}
 
-    function displayError(message) {
-      const errorBox = document.getElementById("error-display");
-      errorBox.innerText = message;
-      errorBox.style.display = "block";
-    }
-    
-    // مطمئن شوید که safeStart به درستی با ساختار جدید کار می‌کند.
-    // چون ensureRegistered اکنون async است و خطا پرتاب می‌کند، منطق اصلی باید داخل try/catch باشد.
-    function safeStart(fn) {
-      // با توجه به اینکه loadNotifications اکنون async است، فراخوانی مستقیم آن کار می‌کند
-      // و try/catch داخل آن برای مدیریت خطاهای auth.js کافی است.
-      fn();
-    }
-
-    safeStart(loadNotifications);
-  </script>
+// فراخوانی تابع اصلی
+loadNotifications();
