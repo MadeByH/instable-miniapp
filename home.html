@@ -1,73 +1,83 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>خانه</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>نمایش آیدی بله</title>
+
+<style>
+body{
+  background:#0b1220;
+  color:#e6eef8;
+  font-family:system-ui;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
+  margin:0;
+}
+.card{
+  background:#0f1724;
+  padding:24px 28px;
+  border-radius:16px;
+  text-align:center;
+  max-width:320px;
+}
+h2{margin:0 0 12px}
+.id{
+  font-size:22px;
+  margin-top:10px;
+  color:#7b61ff;
+  word-break:break-all;
+}
+.error{
+  color:#ff6b6b;
+  margin-top:12px;
+}
+</style>
 </head>
+
 <body>
 
-<header class="topbar"><h1>خانه</h1></header>
+<div class="card">
+  <h2>آیدی عددی شما</h2>
+  <div id="result">در حال دریافت…</div>
+</div>
 
-<main>
-  <div id="grid" class="grid"></div>
-  <div id="loading" class="loading">در حال بارگذاری…</div>
-</main>
-
-<!-- ناوبری -->
-<div id="nav"></div>
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
 
 <script>
-  window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+const result = document.getElementById("result");
 
-  // بارگذاری پست‌ها از API (پست‌های افراد دنبال‌شده)
-  async function initHome() {
-    const grid = document.getElementById('grid');
-    const loading = document.getElementById('loading');
-    loading.style.display = 'block';
-
-    try {
-      // برای گرفتن پست‌های کاربرهای دنبال‌شده
-      const userId = await ensureRegistered();
-      const res = await fetch(`${API_BASE}/get_feed/${userId}`);
-      const posts = await res.json();
-
-      loading.style.display = 'none';
-      if (posts.length === 0) {
-        grid.innerHTML = "<p class='center-msg'>هیچ پستی برای نمایش وجود ندارد</p>";
-        return;
-      }
-
-      posts.forEach(post => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        div.innerHTML = `
-          <img src="${post.photo ? `${API_BASE}/media_proxy?file_id=${post.photo}` : 'https://via.placeholder.com/300x300'}" />
-        `;
-        div.onclick = () => {
-          window.location.href = `post.html?post_id=${post.post_id}`;
-        };
-        grid.appendChild(div);
-      });
-    } catch (e) {
-      console.error(e);
-      loading.style.display = 'none';
-      grid.innerHTML = `<p class="center-msg">خطا در بارگذاری پست‌ها</p>`;
-    }
+function getBaleUserId(){
+  if (!window.Bale || !Bale.WebApp) {
+    result.innerHTML = `<div class="error">❌ فقط داخل بله کار می‌کند</div>`;
+    return;
   }
 
-  // بارگذاری ناوبری
-  fetch("nav.html")
-    .then(r => r.text())
-    .then(html => document.getElementById("nav").innerHTML = html);
+  const data = Bale.WebApp.initDataUnsafe;
+  const userId =
+    data?.user?.id ||
+    data?.user_id ||
+    data?.receiver?.id;
 
-  // زمانی که صفحه بارگذاری می‌شود، پست‌ها را بارگذاری می‌کنیم
-  window.onload = initHome;
+  if (!userId) {
+    result.innerHTML = `<div class="error">⏳ اطلاعات کاربر هنوز آماده نیست</div>`;
+    return;
+  }
+
+  result.innerHTML = `
+    <div>آیدی عددی:</div>
+    <div class="id">${userId}</div>
+  `;
+}
+
+// چند بار تلاش می‌کنیم تا بله آماده شود
+setTimeout(getBaleUserId, 200);
+setTimeout(getBaleUserId, 800);
+setTimeout(getBaleUserId, 1500);
 </script>
-
-<script src="app.js"></script>
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
 
 </body>
 </html>
