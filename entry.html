@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MiniApp Test</title>
+</head>
+<body>
+
+<h2>🔍 تست MiniApp بله</h2>
+<pre id="out">در حال بررسی…</pre>
+
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+
+<script>
+const out = document.getElementById("out");
+
+function log(t){
+  out.textContent += "\n" + t;
+}
+
+if (!window.Bale || !Bale.WebApp) {
+  log("❌ Bale.WebApp وجود ندارد");
+} else {
+  log("✅ Bale.WebApp موجود است");
+  Bale.WebApp.ready();
+
+  setTimeout(() => {
+    const d = Bale.WebApp.initDataUnsafe;
+    log("initDataUnsafe:");
+    log(JSON.stringify(d, null, 2));
+
+    const uid =
+      d?.user?.id ||
+      d?.user_id ||
+      d?.receiver?.id;
+
+    if (uid) {
+      log("🟢 USER ID = " + uid);
+    } else {
+      log("🔴 USER ID پیدا نشد");
+    }
+  }, 500);
+}
+</script>
+
+</body>
+</html>
