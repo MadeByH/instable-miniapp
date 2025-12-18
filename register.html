@@ -1,168 +1,89 @@
 <!doctype html>
 <html lang="fa">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>تکمیل پروفایل</title>
-<link rel="stylesheet" href="style.css">
-
-<style>
-.card{
-  max-width:420px;
-  margin:40px auto;
-  padding:24px;
-  background:var(--card);
-  border-radius:16px;
-  text-align:center;
-}
-.avatar{
-  width:110px;
-  height:110px;
-  border-radius:50%;
-  object-fit:cover;
-  background:#222;
-  margin:0 auto 16px;
-  display:block;
-}
-input, textarea{
-  width:100%;
-  margin-top:10px;
-  padding:12px;
-  border-radius:10px;
-  border:none;
-  background:#1c1c1c;
-  color:white;
-}
-textarea{ resize:none; height:80px; }
-button{
-  margin-top:18px;
-  width:100%;
-  padding:12px;
-  border-radius:12px;
-  background:var(--accent);
-  border:none;
-  color:white;
-  font-size:15px;
-}
-.small{
-  font-size:12px;
-  color:#9aa;
-  margin-top:6px;
-}
-.error{ color:#f88; margin-top:10px; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ثبت‌نام</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-
 <body>
 
-<div class="card">
-  <h2>تکمیل پروفایل</h2>
+<header class="topbar">
+  <h1>تکمیل پروفایل</h1>
+</header>
 
-  <!-- avatar -->
-  <img id="avatarPreview" class="avatar" src="https://via.placeholder.com/110">
-  <input type="file" id="avatarInput" accept="image/*" class="small">
+<main class="card" style="margin:20px;">
+  <img id="avatar" class="avatar"
+       src="https://via.placeholder.com/110">
 
   <input id="displayName" placeholder="نام نمایشی">
   <input id="username" placeholder="نام کاربری (انگلیسی)">
   <textarea id="bio" placeholder="بیو (اختیاری)"></textarea>
 
   <button onclick="submitRegister()">ثبت و ادامه</button>
-  <div id="msg" class="error"></div>
-</div>
+  <p id="msg" class="center-msg"></p>
+</main>
 
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
 <script src="auth.js"></script>
 
 <script>
-window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-</script>
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-<script>
-// -------------------------------
-// پیش‌فرض‌ها از بله
-// -------------------------------
-(async () => {
-  try {
+// 🟢 پر کردن خودکار از بله
+(async ()=>{
+  try{
     await waitForBaleUser();
-    const baleUser = window.Bale.WebApp.initDataUnsafe.user;
+    const u = Bale.WebApp.initDataUnsafe.user;
 
-    if (baleUser?.first_name)
-      displayName.value = baleUser.first_name;
+    if(u?.first_name)
+      displayName.value = u.first_name;
 
-    if (baleUser?.username)
-      username.value = baleUser.username;
+    if(u?.username)
+      username.value = u.username;
 
-  } catch {}
+  }catch{}
 })();
 
-// -------------------------------
-// پیش‌نمایش عکس
-// -------------------------------
-avatarInput.onchange = () => {
-  const file = avatarInput.files[0];
-  if (!file) return;
-
-  avatarPreview.src = URL.createObjectURL(file);
-};
-
-// -------------------------------
-// ارسال ثبت‌نام
-// -------------------------------
 async function submitRegister(){
   const msg = document.getElementById("msg");
-  msg.textContent = "";
+  msg.innerText = "در حال ثبت‌نام…";
 
   try{
     await waitForBaleUser();
     const userId = getUserId();
 
     const display_name = displayName.value.trim();
-    const user_name = username.value.trim().replace("@","");
-    const bio_text = bio.value.trim();
+    const username = username.value.trim().replace("@","");
+    const bio = bio.value.trim();
 
     if(!display_name)
-      return msg.textContent = "نام نمایشی الزامی است";
+      return msg.innerText = "نام نمایشی الزامی است";
 
-    if(!/^[a-zA-Z0-9_.]{3,20}$/.test(user_name))
-      return msg.textContent = "نام کاربری معتبر نیست";
+    if(!/^[a-zA-Z0-9_.]{3,20}$/.test(username))
+      return msg.innerText = "نام کاربری نامعتبر است";
 
-    // آپلود عکس (اختیاری)
-    let profile_pic = null;
-    if (avatarInput.files[0]) {
-      const fd = new FormData();
-      fd.append("file", avatarInput.files[0]);
-
-      const up = await fetch(`${API_BASE}/upload`, {
-        method:"POST",
-        body: fd
-      });
-
-      const upRes = await up.json();
-      profile_pic = upRes.file_id;
-    }
-
-    // ثبت نهایی
     const res = await fetch(`${API_BASE}/register`,{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
       body: JSON.stringify({
         user_id: userId,
         display_name,
-        username: user_name,
-        bio: bio_text,
-        profile_pic
+        username,
+        bio
       })
     });
 
-    if (!res.ok)
-      throw new Error("REGISTER_FAIL");
+    const data = await res.json();
 
-    // اینستاگرام‌طور → برگرد به صفحه اصلی
-    location.href = "index.html";
+    if(!res.ok)
+      return msg.innerText = "خطا در ثبت‌نام";
+
+    // ✅ موفق
+    location.replace("home.html");
 
   }catch(e){
-    msg.textContent = "خطا در ثبت اطلاعات";
-    console.error(e);
+    msg.innerText = "خطای غیرمنتظره";
   }
 }
 </script>
