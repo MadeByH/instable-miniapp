@@ -3,104 +3,82 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Debug Bale MiniApp</title>
-  <style>
-    body{
-      background:#0b1220;
-      color:#e6eef8;
-      font-family:system-ui;
-      padding:16px;
-      line-height:1.7;
-    }
-    h2{margin-top:24px}
-    pre{
-      background:#05060a;
-      padding:12px;
-      border-radius:8px;
-      overflow:auto;
-      font-size:13px;
-    }
-    .ok{color:#4ade80}
-    .err{color:#f87171}
-    .warn{color:#facc15}
-  </style>
+  <title>Home</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h1>🔍 تست مینی‌اپ بله</h1>
+<header class="topbar">
+  <h1>Instable</h1>
+</header>
 
-<div id="status">در حال بررسی…</div>
+<main id="feed"></main>
+<div id="loading" class="loading">در حال بارگذاری پست‌ها…</div>
 
-<h2>وضعیت WebApp</h2>
-<pre id="webapp"></pre>
+<div id="nav"></div>
 
-<h2>initDataUnsafe (خام)</h2>
-<pre id="initdata"></pre>
+<script src="auth.js"></script>
+<script>
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-<h2>نتیجه</h2>
-<pre id="result"></pre>
+let me;
+try {
+  me = requireAuth();
+} catch {
+  // ریدایرکت شده
+}
 
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+async function loadFeed(){
+  const feed = document.getElementById("feed");
+  const loading = document.getElementById("loading");
+
+  try {
+    const res = await fetch(`${API_BASE}/get_feed/${me.id}`);
+    const posts = await res.json();
+
+    loading.style.display = "none";
+
+    if (!Array.isArray(posts) || posts.length === 0) {
+      feed.innerHTML = `<p class="center-msg">هنوز پستی وجود ندارد</p>`;
+      return;
+    }
+
+    posts.forEach(p => {
+      const div = document.createElement("div");
+      div.className = "post";
+
+      const imgUrl = p.photo
+        ? `${API_BASE}/media_proxy?file_id=${p.photo}`
+        : "https://via.placeholder.com/600";
+
+      div.innerHTML = `
+        <div class="post-header">
+          <span class="avatar-sm">👤</span>
+          <span class="username">user ${p.user_id}</span>
+        </div>
+
+        <img class="post-img" src="${imgUrl}">
+
+        <div class="post-actions">
+          ❤️ ${p.likes || 0}
+        </div>
+      `;
+
+      feed.appendChild(div);
+    });
+
+  } catch {
+    loading.innerText = "❌ خطا در بارگذاری فید";
+  }
+}
+
+loadFeed();
+</script>
 
 <script>
-const statusEl   = document.getElementById("status");
-const webappEl  = document.getElementById("webapp");
-const initEl    = document.getElementById("initdata");
-const resultEl  = document.getElementById("result");
-
-function print(el, obj){
-  el.textContent = typeof obj === "string"
-    ? obj
-    : JSON.stringify(obj, null, 2);
-}
-
-function fail(msg){
-  statusEl.innerHTML = "❌ <span class='err'>" + msg + "</span>";
-  print(resultEl, msg);
-}
-
-try {
-  // 1️⃣ آیا داخل بله هستیم؟
-  if (!window.Bale || !Bale.WebApp) {
-    fail("Bale.WebApp وجود ندارد → این صفحه داخل اپ بله باز نشده");
-    print(webappEl, "undefined");
-    return;
-  }
-
-  statusEl.innerHTML = "✅ <span class='ok'>Bale.WebApp موجود است</span>";
-  print(webappEl, Object.keys(Bale.WebApp));
-
-  // 2️⃣ آماده‌سازی
-  Bale.WebApp.ready();
-
-  // 3️⃣ خواندن initDataUnsafe
-  const data = Bale.WebApp.initDataUnsafe || {};
-  print(initEl, data);
-
-  if (!data.user) {
-    fail("initDataUnsafe.user وجود ندارد → مینی‌اپ با launch context اجرا نشده");
-    return;
-  }
-
-  if (!data.user.id) {
-    fail("user وجود دارد ولی user.id ارسال نشده");
-    return;
-  }
-
-  // 4️⃣ موفق 🎉
-  statusEl.innerHTML = "🎉 <span class='ok'>اطلاعات کاربر با موفقیت دریافت شد</span>";
-
-  print(resultEl, {
-    user_id: data.user.id,
-    username: data.user.username,
-    first_name: data.user.first_name,
-    last_name: data.user.last_name,
-    photo_url: data.user.photo_url
-  });
-
-} catch (e) {
-  fail("خطای جاوااسکریپت: " + e.message);
-}
+fetch("nav.html")
+  .then(r => r.text())
+  .then(html => document.getElementById("nav").innerHTML = html);
 </script>
 
 </body>
