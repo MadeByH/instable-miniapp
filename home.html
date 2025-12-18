@@ -1,139 +1,107 @@
 <!doctype html>
 <html lang="fa">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Debug: User ID</title>
-<style>
-  body{font-family:system-ui,Segoe UI,Roboto; background:#0b1220;color:#e6eef8; padding:18px}
-  .box{max-width:720px;margin:24px auto;padding:18px;background:#0f1724;border-radius:12px}
-  .ok{color:#8ef0a5}
-  .warn{color:#ffd38a}
-  .err{color:#ff8a8a}
-  pre{white-space:pre-wrap;word-break:break-word}
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Debug Bale MiniApp</title>
+  <style>
+    body{
+      background:#0b1220;
+      color:#e6eef8;
+      font-family:system-ui;
+      padding:16px;
+      line-height:1.7;
+    }
+    h2{margin-top:24px}
+    pre{
+      background:#05060a;
+      padding:12px;
+      border-radius:8px;
+      overflow:auto;
+      font-size:13px;
+    }
+    .ok{color:#4ade80}
+    .err{color:#f87171}
+    .warn{color:#facc15}
+  </style>
 </head>
 <body>
-  <div class="box">
-    <h2>وضعیت اتصال مینی‌اپ بله</h2>
-    <div id="status">شروع…</div>
-    <hr>
-    <h3>اطلاعات خام (initDataUnsafe)</h3>
-    <pre id="raw">---</pre>
-    <h3>user id (عدد)</h3>
-    <div id="userid">---</div>
-  </div>
+
+<h1>🔍 تست مینی‌اپ بله</h1>
+
+<div id="status">در حال بررسی…</div>
+
+<h2>وضعیت WebApp</h2>
+<pre id="webapp"></pre>
+
+<h2>initDataUnsafe (خام)</h2>
+<pre id="initdata"></pre>
+
+<h2>نتیجه</h2>
+<pre id="result"></pre>
 
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
+
 <script>
-const statusEl = document.getElementById('status');
-const rawEl = document.getElementById('raw');
-const uidEl = document.getElementById('userid');
+const statusEl   = document.getElementById("status");
+const webappEl  = document.getElementById("webapp");
+const initEl    = document.getElementById("initdata");
+const resultEl  = document.getElementById("result");
 
-function setStatus(text, cls){
-  statusEl.textContent = text;
-  statusEl.className = cls || '';
+function print(el, obj){
+  el.textContent = typeof obj === "string"
+    ? obj
+    : JSON.stringify(obj, null, 2);
 }
 
-// امن‌ترین روش: اول مطمئن شویم window.Bale.WebApp وجود دارد، سپس صبر برای initDataUnsafe
-function waitForWebAppInit(timeout = 6000){
-  return new Promise((resolve, reject) => {
-    const start = Date.now();
-
-    // اگر Bale.WebApp.ready وجود دارد، از آن استفاده کن (بهترین راه)
-    if (window.Bale && window.Bale.WebApp && typeof Bale.WebApp.ready === 'function') {
-      setStatus('Bale.WebApp حاضر است — فراخوانی ready() و انتظار initDataUnsafe...', 'ok');
-      // ready callback اجرا می‌شود وقتی مینی‌اپ آماده شد
-      try {
-        Bale.WebApp.ready(() => {
-          // کمی کوتاه صبر کن تا initDataUnsafe مقداردهی شود
-          setTimeout(() => {
-            if (window.Bale.WebApp.initDataUnsafe) return resolve(window.Bale.WebApp.initDataUnsafe);
-            // در غیر این صورت وارد حلقه poll شویم (fallback)
-            pollInit();
-          }, 50);
-        });
-      } catch (err) {
-        // اگر ready اجرا نشد، رایج‌ترین fallback: poll کردن
-        pollInit();
-      }
-      return;
-    }
-
-    // اگر WebApp هنوز در دسترس نیست، هر 150ms چک کن تا timeout
-    function pollInit(){
-      const iv = setInterval(() => {
-        if (window.Bale && window.Bale.WebApp && window.Bale.WebApp.initDataUnsafe) {
-          clearInterval(iv);
-          return resolve(window.Bale.WebApp.initDataUnsafe);
-        }
-        if (Date.now() - start > timeout) {
-          clearInterval(iv);
-          return reject(new Error('INIT_TIMEOUT'));
-        }
-      }, 150);
-    }
-
-    // اگر هنوز Bale.WebApp نیومده، اول منتظرش باشیم (پولینگ برای خودِ Bale.WebApp)
-    if (!window.Bale || !window.Bale.WebApp) {
-      const iv2 = setInterval(() => {
-        if (window.Bale && window.Bale.WebApp) {
-          clearInterval(iv2);
-          pollInit();
-        }
-        if (Date.now() - start > timeout) {
-          clearInterval(iv2);
-          return reject(new Error('WEBAPP_NOT_FOUND'));
-        }
-      }, 150);
-    } else {
-      // WebApp هست؛ شروع به poll
-      pollInit();
-    }
-  });
+function fail(msg){
+  statusEl.innerHTML = "❌ <span class='err'>" + msg + "</span>";
+  print(resultEl, msg);
 }
 
-(async function main(){
-  try {
-    setStatus('در حال آماده‌سازی، منتظر WebApp و initDataUnsafe ...', 'warn');
-    const init = await waitForWebAppInit(7000); // 7s timeout
-    setStatus('initDataUnsafe دریافت شد ✅', 'ok');
-    rawEl.textContent = JSON.stringify(init, null, 2);
-
-    // مقدار کاربر در مستندات: WebAppInitData.user یا user (varname ها ممکنه فرق کنه)
-    const user = init.user || init.userWebAppUser || init.user_data || init.user_id || init.userId || null;
-
-    // بعضی پیاده‌سازی‌ها WebAppInitData شامل user تحت کلید user یا userWebAppUser هستند
-    // ما تلاش می‌کنیم معروف‌ترین فیلدها را بخوانیم:
-    let uid = null;
-    if (init.user && (init.user.id || init.user.id === 0)) uid = init.user.id;
-    if (!uid && init.userWebAppUser && init.userWebAppUser.id) uid = init.userWebAppUser.id;
-    if (!uid && typeof init.user_id === 'number') uid = init.user_id;
-    if (!uid && typeof init.userId === 'number') uid = init.userId;
-
-    if (uid || uid === 0) {
-      uidEl.textContent = String(uid);
-      uidEl.className = 'ok';
-      setStatus('شناسه کاربر با موفقیت خوانده شد ✅', 'ok');
-    } else {
-      uidEl.textContent = 'مقداری پیدا نشد';
-      uidEl.className = 'err';
-      setStatus('initData آمده ولی user.id پیدا نشد — ممکن است فیلد متفاوت باشد.', 'err');
-    }
-
-  } catch (err) {
-    // خطای مشخص: timeout یا webapp missing
-    if (err.message === 'WEBAPP_NOT_FOUND') {
-      setStatus('window.Bale.WebApp پیدا نشد — این صفحه خارج از کلاینت بله اجرا شده.', 'err');
-    } else if (err.message === 'INIT_TIMEOUT') {
-      setStatus('اطلاعات کاربر آماده نشد (timeout) — ممکن است WebApp.ready فراخوانی نشده یا شبکه کند باشد.', 'err');
-    } else {
-      setStatus('خطای ناگهانی: ' + err.message, 'err');
-    }
-    rawEl.textContent = 'خطا: ' + (err.stack || err.message || err);
-    uidEl.textContent = '---';
+try {
+  // 1️⃣ آیا داخل بله هستیم؟
+  if (!window.Bale || !Bale.WebApp) {
+    fail("Bale.WebApp وجود ندارد → این صفحه داخل اپ بله باز نشده");
+    print(webappEl, "undefined");
+    return;
   }
-})();
+
+  statusEl.innerHTML = "✅ <span class='ok'>Bale.WebApp موجود است</span>";
+  print(webappEl, Object.keys(Bale.WebApp));
+
+  // 2️⃣ آماده‌سازی
+  Bale.WebApp.ready();
+
+  // 3️⃣ خواندن initDataUnsafe
+  const data = Bale.WebApp.initDataUnsafe || {};
+  print(initEl, data);
+
+  if (!data.user) {
+    fail("initDataUnsafe.user وجود ندارد → مینی‌اپ با launch context اجرا نشده");
+    return;
+  }
+
+  if (!data.user.id) {
+    fail("user وجود دارد ولی user.id ارسال نشده");
+    return;
+  }
+
+  // 4️⃣ موفق 🎉
+  statusEl.innerHTML = "🎉 <span class='ok'>اطلاعات کاربر با موفقیت دریافت شد</span>";
+
+  print(resultEl, {
+    user_id: data.user.id,
+    username: data.user.username,
+    first_name: data.user.first_name,
+    last_name: data.user.last_name,
+    photo_url: data.user.photo_url
+  });
+
+} catch (e) {
+  fail("خطای جاوااسکریپت: " + e.message);
+}
 </script>
+
 </body>
 </html>
