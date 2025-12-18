@@ -1,206 +1,68 @@
-<!doctype html>  
-<html lang="fa">  
-<head>  
-<meta charset="utf-8">  
-<meta name="viewport" content="width=device-width,initial-scale=1">  
-<title>اعلان‌ها</title>  
-<link rel="stylesheet" href="style.css">  
-  
-<style>  
-.notif{  
-  padding:14px;  
-  border-bottom:1px solid rgba(255,255,255,.06);  
-}  
-.notif-time{  
-  font-size:12px;  
-  color:#8aa0b8;  
-  margin-top:4px;  
-}  
-.center-msg{  
-  text-align:center;  
-  color:#9eb0c8;  
-  margin-top:30px;  
-}  
-/* استایل برای پیام‌های خطا در صفحه */
-#error-display {
-    text-align: center;
-    color: #ff4444; /* رنگ قرمز برای خطا */
-    margin-top: 30px;
-    padding: 15px;
-    border: 1px solid #ff4444;
-    background-color: rgba(255, 68, 68, 0.1);
-}
-</style>  
-</head>  
-  
-<body>  
-  
-<header class="topbar">  
-  <h1>اعلان‌ها</h1>  
-</header>  
-  
-<main id="notifRoot"></main>  
-<div id="error-display" style="display: none;"></div> <!-- عنصر جدید برای نمایش خطاها -->
-<div id="loading" class="loading">در حال بارگذاری…</div>  
-<div id="nav"></div>  
-  
-<!-- ============================= -->  
-<!-- تنظیمات -->  
-<!-- ============================= -->  
-<script>  
-window.API_BASE = "https://insta-api-avn2.onrender.com/api";  
-</script>  
-  
-<!-- ============================= -->  
-<!-- Bale Loader -->  
-<!-- ============================= -->  
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>  
-  
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اعلان‌ها</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+  <h1>اعلان‌ها</h1>
+</header>
+
+<main id="notifRoot"></main>
+<div id="loading" class="loading">در حال بارگذاری…</div>
+
+<div id="nav"></div>
+
 <script src="auth.js"></script>
+<script>
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-<!-- ============================= -->  
-<!-- Main Logic -->  
-<!-- ============================= -->  
-<script>  
-function displayMessage(message, isError = false) {
-    const root = document.getElementById("notifRoot");
-    const errorBox = document.getElementById("error-display");
-    
-    if (!root) {
-        // اگر هیچ عنصری پیدا نشد، لاگ کنسول تنها راه باقی‌مانده است (که طبق درخواست باید حذف شود، اما به عنوان fallback باقی می‌ماند)
-        if (isError) console.error("Root element not found. Error:", message);
-        return;
-    }
-
-    if (isError && errorBox) {
-        errorBox.innerText = message;
-        errorBox.style.display = "block";
-        root.innerHTML = ''; 
-    } else {
-        if (errorBox) errorBox.style.display = "none";
-        // استفاده از کلاس center-msg برای پیام‌های موفقیت/اطلاعاتی
-        root.innerHTML = `<p class="${isError ? 'error-msg' : 'center-msg'}">${message}</p>`;
-    }
-}
-
-// ---------------------------------------------------------------------
-// 2. نسخه بازنویسی شده ensureRegistered (باید در auth.js یا اینجا باشد)
-// ---------------------------------------------------------------------
-async function ensureRegistered() {
-    if (!window.Bale?.WebApp)
-        return { ok: false, reason: "NOT_IN_BALE" }; 
-
-    await window.waitForBaleUser();
-
-    const userId = window.getUserId();
-    if (!userId)
-        return { ok: false, reason: "NO_USER" }; 
-
-    const res = await fetch(`${window.API_BASE}/user_exists/${userId}`);
-    if (!res.ok)
-        return { ok: false, reason: "API_ERROR" }; 
-
-    const data = await res.json();
-
-    if (!data.exists) {
-        window.location.replace("register.html");
-        throw new Error("REDIRECT_REGISTER"); 
-    }
-
-    return parseInt(userId);
-}
-
-// ---------------------------------------------------------------------
-// 3. بازنویسی loadNotifications برای مدیریت خروجی‌های جدید در صفحه
-// ---------------------------------------------------------------------
-async function loadNotifications() {
+async function loadNotifications(){
   const root = document.getElementById("notifRoot");
   const loading = document.getElementById("loading");
 
-  if (loading) loading.style.display = "block"; 
-  if (root) root.innerHTML = ''; 
-  if (document.getElementById("error-display")) document.getElementById("error-display").style.display = "none";
+  try{
+    const me = requireAuth();
 
-  try {
-    const result = await ensureRegistered();
-
-    if (result.ok === false) {
-        const reason = result.reason;
-        if (reason === "NOT_IN_BALE") {
-            displayError("این سرویس فقط درون اپلیکیشن بله قابل دسترسی است.");
-        } else if (reason === "NO_USER") {
-            displayError("خطا در دریافت شناسه کاربری از بله.");
-        } else if (reason === "API_ERROR") {
-            displayError("خطا در ارتباط با سرور برای تایید ثبت نام.");
-        } else if (reason === "REDIRECT_REGISTER") {
-            displayError("در حال انتقال به صفحه ثبت نام...");
-            return;
-        }
-        if (loading) loading.style.display = "none";
-        return;
-    }
-
-    // کد بارگذاری اعلان‌ها ادامه می‌یابد
-    const userId = result.userId; // دریافت userId
-
-    const res = await fetch(`${window.API_BASE}/notifications/${userId}?limit=50`);
-    if (!res.ok) {
-        displayError(`خطا در دریافت اعلان‌ها (Status: ${res.status})`);
-        if (loading) loading.style.display = "none";
-        return;
-    }
-
+    const res = await fetch(`${API_BASE}/notifications/${me.id}`);
     const data = await res.json();
-    if (!Array.isArray(data) || data.length === 0) {
-        displayError("شما هیچ اعلان جدیدی ندارید.");
-    } else {
-        root.innerHTML = ''; 
-        data.forEach(n => {  
-            const div = document.createElement("div");  
-            div.className = "notif";  
-            const timestamp = n.created_at || "زمان نامشخص";
-            div.innerHTML = `
-                <div>${n.text}</div>
-                <div class="notif-time">${timestamp}</div>
-            `;  
-            root.appendChild(div);  
-        });  
-    }
-  } catch (e) {  
-    if (loading) loading.style.display = "none";
-    if (e.message === "REDIRECT_REGISTER") {
-        displayError("در حال انتقال به صفحه ثبت نام...");
-        return; 
-    } else {
-        displayError("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"));
-    }
-  } finally {  
-    if (loading) loading.style.display = "none";
-  }
-  }
-</script>  
 
-<!-- ============================= -->  
-<!-- Run -->  
-<!-- ============================= -->  
-<script>  
-// فرض بر این است که تابع safeStart در auth.js تعریف شده است
-if (typeof safeStart === "function") {  
-  safeStart(loadNotifications);  
-} else {
-  // اگر safeStart وجود نداشت، مستقیماً loadNotifications را اجرا کنید
-  loadNotifications();
+    loading.style.display = "none";
+
+    if (!Array.isArray(data) || data.length === 0){
+      root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
+      return;
+    }
+
+    data.forEach(n=>{
+      const div = document.createElement("div");
+      div.className = "notif";
+      div.innerHTML = `
+        <div>${n.text}</div>
+        <div class="notif-time">${n.created_at}</div>
+      `;
+      root.appendChild(div);
+    });
+
+  }catch(e){
+    loading.style.display = "none";
+    root.innerHTML = `<p class="center-msg">خطا در دریافت اعلان‌ها</p>`;
+  }
 }
-</script>  
-  
-<!-- ============================= -->  
-<!-- Navigation -->  
-<!-- ============================= -->  
-<script>  
-fetch("nav.html")  
-  .then(r => r.text())  
-  .then(html => document.getElementById("nav").innerHTML = html);  
-</script>  
-  
-</body>  
+
+loadNotifications();
+</script>
+
+<script>
+fetch("nav.html")
+  .then(r=>r.text())
+  .then(html=>nav.innerHTML=html);
+</script>
+
+</body>
 </html>
