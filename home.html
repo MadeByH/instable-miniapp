@@ -1,63 +1,73 @@
 <!DOCTYPE html>
 <html lang="fa">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>فید</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-        }
-        .card {
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-        .card img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>خانه</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <header>
-        <h1>فید</h1>
-    </header>
+<header class="topbar"><h1>خانه</h1></header>
 
-    <main>
-        <div id="grid" class="grid"></div>
-        <div id="loading" class="loading">در حال بارگذاری...</div>
-    </main>
+<main>
+  <div id="grid" class="grid"></div>
+  <div id="loading" class="loading">در حال بارگذاری…</div>
+</main>
 
-    <script>
-        window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+<!-- ناوبری -->
+<div id="nav"></div>
 
-        async function getFeed() {
-            const res = await fetch(`${API_BASE}/get_feed/1`); // user_id = 1 به عنوان مثال
-            const posts = await res.json();
-            const grid = document.getElementById('grid');
-            const loading = document.getElementById('loading');
-            loading.style.display = "none";
+<script>
+  window.API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-            posts.forEach(post => {
-                const div = document.createElement('div');
-                div.classList.add('card');
-                div.innerHTML = `
-                    <img src="${post.photo ? `${API_BASE}/media_proxy?file_id=${post.photo}` : 'https://via.placeholder.com/300x300'}" />
-                `;
-                div.onclick = () => {
-                    window.location.href = `post.html?post_id=${post.post_id}`;
-                };
-                grid.appendChild(div);
-            });
-        }
+  // بارگذاری پست‌ها از API (پست‌های افراد دنبال‌شده)
+  async function initHome() {
+    const grid = document.getElementById('grid');
+    const loading = document.getElementById('loading');
+    loading.style.display = 'block';
 
-        window.onload = getFeed;
-    </script>
+    try {
+      // برای گرفتن پست‌های کاربرهای دنبال‌شده
+      const userId = await ensureRegistered();
+      const res = await fetch(`${API_BASE}/get_feed/${userId}`);
+      const posts = await res.json();
+
+      loading.style.display = 'none';
+      if (posts.length === 0) {
+        grid.innerHTML = "<p class='center-msg'>هیچ پستی برای نمایش وجود ندارد</p>";
+        return;
+      }
+
+      posts.forEach(post => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        div.innerHTML = `
+          <img src="${post.photo ? `${API_BASE}/media_proxy?file_id=${post.photo}` : 'https://via.placeholder.com/300x300'}" />
+        `;
+        div.onclick = () => {
+          window.location.href = `post.html?post_id=${post.post_id}`;
+        };
+        grid.appendChild(div);
+      });
+    } catch (e) {
+      console.error(e);
+      loading.style.display = 'none';
+      grid.innerHTML = `<p class="center-msg">خطا در بارگذاری پست‌ها</p>`;
+    }
+  }
+
+  // بارگذاری ناوبری
+  fetch("nav.html")
+    .then(r => r.text())
+    .then(html => document.getElementById("nav").innerHTML = html);
+
+  // زمانی که صفحه بارگذاری می‌شود، پست‌ها را بارگذاری می‌کنیم
+  window.onload = initHome;
+</script>
+
+<script src="app.js"></script>
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+
 </body>
 </html>
