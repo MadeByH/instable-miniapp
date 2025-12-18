@@ -32,12 +32,45 @@ async function loadProfile(){
 
   try{
     const me = requireAuth();
-
     const targetId =
       new URLSearchParams(location.search).get("user_id") || me.id;
 
+    const isMe = String(me.id) === String(targetId);
+
     const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
     const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
+
+    profileAvatar.src = user.profile_pic
+      ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
+      : "https://via.placeholder.com/110";
+
+    displayName.innerText = user.display_name;
+    bio.innerText = user.bio || "";
+
+    postCount.innerText = posts.length;
+    followerCount.innerText = user.followers;
+    followingCount.innerText = user.following;
+
+// دکمه‌ها
+    if(isMe){
+      profileActions.innerHTML = `
+        <button onclick="location.href='edit-profile.html'">ویرایش پروفایل</button>
+  `;
+    }else{
+      profileActions.innerHTML = `
+        <button onclick="toggleFollow(${targetId})">
+          ${user.is_following ? "لغو دنبال" : "دنبال کردن"}
+        </button>
+  `;
+}
+
+// گرید پست‌ها
+    profile-posts.innerHTML="";
+    posts.forEach(p=>{
+      const img=document.createElement("img");
+      img.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
+      profile-posts.appendChild(img);
+});
 
     loading.style.display="none";
 
