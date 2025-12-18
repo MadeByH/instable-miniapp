@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>فید</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+        .card {
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>فید</h1>
+    </header>
+
+    <main>
+        <div id="grid" class="grid"></div>
+        <div id="loading" class="loading">در حال بارگذاری...</div>
+    </main>
+
+    <script>
+        window.API_BASE = "https://insta-api-avn2.onrender.com/api";
+
+        async function getFeed() {
+            const res = await fetch(`${API_BASE}/get_feed/1`); // user_id = 1 به عنوان مثال
+            const posts = await res.json();
+            const grid = document.getElementById('grid');
+            const loading = document.getElementById('loading');
+            loading.style.display = "none";
+
+            posts.forEach(post => {
+                const div = document.createElement('div');
+                div.classList.add('card');
+                div.innerHTML = `
+                    <img src="${post.photo ? `${API_BASE}/media_proxy?file_id=${post.photo}` : 'https://via.placeholder.com/300x300'}" />
+                `;
+                div.onclick = () => {
+                    window.location.href = `post.html?post_id=${post.post_id}`;
+                };
+                grid.appendChild(div);
+            });
+        }
+
+        window.onload = getFeed;
+    </script>
+</body>
+</html>
