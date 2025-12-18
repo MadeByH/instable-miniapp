@@ -51,28 +51,22 @@ async function ensureRegistered() {
   if (!window.Bale?.WebApp)
     return { ok: false, reason: "NOT_IN_BALE" };
 
-  // این تابع یا برمی‌گردد یا خطا پرتاب می‌کند (USER_NOT_READY)
-  await waitForBaleUser();
+  await window.waitForBaleUser();
 
-  const userId = getUserId();
+  const userId = window.getUserId();
   if (!userId)
     return { ok: false, reason: "NO_USER" };
 
-  // API_BASE باید اینجا تعریف شده باشد یا از global گرفته شود
-  const API_BASE = window.API_BASE || "https://insta-api-avn2.onrender.com/api"; 
-
-  const res = await fetch(`${API_BASE}/user_exists/${userId}`);
+  const res = await fetch(`${window.API_BASE}/user_exists/${userId}`);
   if (!res.ok)
     return { ok: false, reason: "API_ERROR" };
 
   const data = await res.json();
 
   if (!data.exists) {
-    // در اینجا ریدایرکت می‌کنیم و یک شیء خاص برمی‌گردانیم
-    location.replace("register.html");
-    return { ok: false, reason: "REDIRECT_REGISTER" };
+    window.location.replace("register.html");
+    throw new Error("REDIRECT_REGISTER");
   }
 
-  // موفقیت
   return { ok: true, userId: parseInt(userId) };
-}
+      }
