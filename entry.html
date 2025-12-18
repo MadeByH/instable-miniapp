@@ -1,47 +1,59 @@
 <!doctype html>
 <html lang="fa">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MiniApp Test</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>در حال ورود…</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<h2>🔍 تست MiniApp بله</h2>
-<pre id="out">در حال بررسی…</pre>
+<main class="loading">
+  در حال ورود به اینستا بله…
+</main>
 
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
 
 <script>
-const out = document.getElementById("out");
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-function log(t){
-  out.textContent += "\n" + t;
+function show(msg){
+  document.body.innerHTML = `<p style="padding:20px;text-align:center">${msg}</p>`;
 }
 
-if (!window.Bale || !Bale.WebApp) {
-  log("❌ Bale.WebApp وجود ندارد");
-} else {
-  log("✅ Bale.WebApp موجود است");
+(async () => {
+  if (!window.Bale?.WebApp) {
+    show("❌ این برنامه فقط داخل بله اجرا می‌شود");
+    return;
+  }
+
   Bale.WebApp.ready();
 
-  setTimeout(() => {
-    const d = Bale.WebApp.initDataUnsafe;
-    log("initDataUnsafe:");
-    log(JSON.stringify(d, null, 2));
+  const data = Bale.WebApp.initDataUnsafe;
+  const user = data?.user;
 
-    const uid =
-      d?.user?.id ||
-      d?.user_id ||
-      d?.receiver?.id;
+  if (!user?.id) {
+    show("⏳ اطلاعات کاربر هنوز آماده نیست، صفحه را ببندید و دوباره باز کنید");
+    return;
+  }
 
-    if (uid) {
-      log("🟢 USER ID = " + uid);
-    } else {
-      log("🔴 USER ID پیدا نشد");
-    }
-  }, 500);
-}
+  // ذخیره‌ی اطلاعات کاربر
+  sessionStorage.setItem("bale_user", JSON.stringify({
+    id: user.id,
+    username: user.username || "",
+    first_name: user.first_name || ""
+  }));
+
+  // بررسی ثبت‌نام
+  const res = await fetch(`${API_BASE}/user_exists/${user.id}`);
+  const j = await res.json();
+
+  if (!j.exists) {
+    location.replace("register.html");
+  } else {
+    location.replace("home.html");
+  }
+})();
 </script>
 
 </body>
