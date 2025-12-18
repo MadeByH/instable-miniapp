@@ -113,44 +113,36 @@ async function ensureRegistered() {
 // ---------------------------------------------------------------------
 // 3. بازنویسی loadNotifications برای مدیریت خروجی‌های جدید در صفحه
 // ---------------------------------------------------------------------
-async function loadNotifications() {  
-  const root = document.getElementById("notifRoot");  
-  const loading = document.getElementById("loading");  
-  
+async function loadNotifications() {
+  const root = document.getElementById("notifRoot");
+  const loading = document.getElementById("loading");
+
   if (loading) loading.style.display = "block"; 
   if (root) root.innerHTML = ''; 
   if (document.getElementById("error-display")) document.getElementById("error-display").style.display = "none";
 
-
-  // ... (بخش‌های اولیه)
-
   try {  
     const result = await ensureRegistered();  
         
-    if (result.ok === false) { // این بخش مدیریت شیء‌های خطا را انجام می‌دهد
+    if (result.ok === false) {
         const reason = result.reason;
-            
+
         if (reason === "NOT_IN_BALE") {
             displayMessage("این سرویس فقط درون اپلیکیشن بله قابل دسترسی است.", true);
         } else if (reason === "NO_USER") {
-             displayMessage("خطا در دریافت شناسه کاربری از بله.", true);
+            displayMessage("خطا در دریافت شناسه کاربری از بله.", true);
         } else if (reason === "API_ERROR") {
-             displayMessage("خطا در ارتباط با سرور برای تایید ثبت نام.", true);
+            displayMessage("خطا در ارتباط با سرور برای تایید ثبت نام.", true);
         } else if (reason === "REDIRECT_REGISTER") {
-            // این مورد نباید اینجا اجرا شود چون location.replace قبلاً فراخوانی شده
             displayMessage("در حال انتقال به صفحه ثبت نام...", false); 
             return;
         }
+
         if (loading) loading.style.display = "none";
         return;
     }
         
-    const userId = result.userId; // اکنون userId را از شیء نتیجه استخراج می‌کنیم
-    // ... (ادامه کد برای بارگذاری اعلان‌ها)
-  
-    // پیام لودینگ در این مرحله برداشته می‌شود و پیام اصلی نمایش داده می‌شود
-    // displayMessage(`در حال بارگذاری اعلان‌ها برای کاربر ${userId}...`, false);
-
+    const userId = result.userId; 
     const res = await fetch(`${window.API_BASE}/notifications/${userId}?limit=50`);
 
     if (!res.ok) {
@@ -168,7 +160,6 @@ async function loadNotifications() {
         data.forEach(n => {  
             const div = document.createElement("div");  
             div.className = "notif";  
-            // اطمینان از وجود created_at
             const timestamp = n.created_at || "زمان نامشخص";
             div.innerHTML = `  
                 <div>${n.text}</div>  
@@ -187,13 +178,12 @@ async function loadNotifications() {
     } else if (e.message === "USER_NOT_READY") {
          displayMessage("دریافت اطلاعات بله با تأخیر مواجه شد. لطفا مجدداً بارگذاری نمایید.", true);
     } else {  
-        // این تنها جایی است که پیام خطا به صورت عمومی نمایش داده می‌شود
         displayMessage("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"), true);
     }
   } finally {  
     if (loading) loading.style.display = "none";
   }
-}
+  }
 </script>  
 
 <!-- ============================= -->  
