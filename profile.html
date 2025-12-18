@@ -1,43 +1,15 @@
 <!doctype html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>پروفایل</title>
-  <link rel="stylesheet" href="style.css">
-
-  <style>
-    .profile-head {
-      max-width: 720px;
-      margin: 18px auto;
-      padding: 18px;
-      background: var(--card);
-      border-radius: 14px;
-      display: flex;
-      gap: 18px;
-    }
-    .avatar {
-      width: 90px;
-      height: 90px;
-      border-radius: 50%;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 4px;
-    }
-    .center-msg {
-      text-align: center;
-      color: #9eb0c8;
-      margin-top: 30px;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>پروفایل</title>
+<link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
 <header class="topbar">
-  <a href="index.html">←</a>
   <h1>پروفایل</h1>
 </header>
 
@@ -49,90 +21,65 @@
 
 <div id="nav"></div>
 
-<!-- ============================= -->
-<!-- Config -->
-<!-- ============================= -->
-<script>
-  window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-</script>
-
-<!-- ============================= -->
-<!-- Bale Loader -->
-<!-- ============================= -->
-<script src="https://tapi.bale.ai/miniapp.js?3"></script>
-
 <script src="auth.js"></script>
-
-<!-- ============================= -->
-<!-- Main Logic -->
-<!-- ============================= -->
 <script>
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
+
 async function loadProfile(){
   const root = document.getElementById("profile-root");
   const postsEl = document.getElementById("profile-posts");
   const loading = document.getElementById("loading");
 
-  const auth = await ensureRegistered();
-  if (!auth.ok) {
+  try{
+    const me = requireAuth();
+
+    const targetId =
+      new URLSearchParams(location.search).get("user_id") || me.id;
+
+    const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
+    const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
+
     loading.style.display="none";
-    return;
-  }
 
-  const targetId =
-    new URLSearchParams(location.search).get("user_id") || auth.userId;
-
-  const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
-  const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
-
-  loading.style.display="none";
-
-  root.innerHTML = `
-    <div class="profile-head">
-      <img class="avatar" src="${
-        user.profile_pic
-        ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
-        : 'https://via.placeholder.com/90'
-      }">
-      <div>
-        <h3>${user.display_name}</h3>
-        <p>${user.bio || ""}</p>
+    root.innerHTML = `
+      <div class="profile-head">
+        <img class="avatar" src="${
+          user.profile_pic
+          ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
+          : 'https://via.placeholder.com/110'
+        }">
+        <div>
+          <h3>${user.display_name}</h3>
+          <p>@${user.username}</p>
+          <p>${user.bio || ""}</p>
+          <small>${user.followers} دنبال‌کننده · ${user.following} دنبال‌شده</small>
+        </div>
       </div>
-    </div>
-  `;
+    `;
 
-  postsEl.innerHTML="";
-  posts.forEach(p=>{
-    const img = document.createElement("img");
-    img.src = p.photo
-      ? `${API_BASE}/media_proxy?file_id=${p.photo}`
-      : "https://via.placeholder.com/300";
-    postsEl.appendChild(img);
-  });
+    postsEl.innerHTML="";
+    posts.forEach(p=>{
+      const img=document.createElement("img");
+      img.src = p.photo
+        ? `${API_BASE}/media_proxy?file_id=${p.photo}`
+        : "https://via.placeholder.com/300";
+      postsEl.appendChild(img);
+    });
+
+  }catch(e){
+    loading.style.display="none";
+    root.innerHTML=`<p class="center-msg">خطا در بارگذاری پروفایل</p>`;
+  }
 }
 
-safeStart(loadProfile);
+loadProfile();
 </script>
 
-<!-- ============================= -->
-<!-- Run -->
-<!-- ============================= -->
 <script>
-  if (typeof safeStart === "function") {
-    safeStart(loadProfile);
-  } else {
-    // اگر safeStart وجود نداشت، مستقیماً loadProfile را اجرا کنید
-    loadProfile();
-  }
-</script>
-
-<!-- ============================= -->
-<!-- Nav -->
-<!-- ============================= -->
-<script>
-  fetch("nav.html")
-    .then(r => r.text())
-    .then(html => document.getElementById("nav").innerHTML = html);
+fetch("nav.html")
+  .then(r=>r.text())
+  .then(html=>nav.innerHTML=html);
 </script>
 
 </body>
-  </html>
+</html>
