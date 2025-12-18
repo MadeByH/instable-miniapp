@@ -47,26 +47,42 @@ function safeStart(fn){
   setTimeout(safeFn, 1500);
 }
 
+function displayError(message) {
+  const errorDiv = document.getElementById("error-display");
+  if (errorDiv) {
+    errorDiv.innerText = message;
+    errorDiv.style.display = "block"; // نمایش خطا
+  }
+}
+
 async function ensureRegistered() {
   if (!window.Bale?.WebApp)
     return { ok: false, reason: "NOT_IN_BALE" };
 
-  await window.waitForBaleUser();
+  try {
+    await waitForBaleUser();
+    const userId = getUserId();
+    if (!userId)
+      return { ok: false, reason: "NO_USER" };
 
-  const userId = window.getUserId();
-  if (!userId)
-    return { ok: false, reason: "NO_USER" };
+    const API_BASE = window.API_BASE || "https://insta-api-avn2.onrender.com/api"; 
 
-  const res = await fetch(`${window.API_BASE}/user_exists/${userId}`);
-  if (!res.ok)
-    return { ok: false, reason: "API_ERROR" };
+    const res = await fetch(`${API_BASE}/user_exists/${userId}`);
+    if (!res.ok)
+      return { ok: false, reason: "API_ERROR" };
 
-  const data = await res.json();
+    const data = await res.json();
 
-  if (!data.exists) {
-    window.location.replace("register.html");
-    throw new Error("REDIRECT_REGISTER");
+    if (!data.exists) {
+      location.replace("register.html");
+      return { ok: false, reason: "REDIRECT_REGISTER" };
+    }
+
+    return { ok: true, userId: parseInt(userId) };
+
+  } catch (error) {
+    // نمایش خطا در صفحه به جای کنسول
+    displayError("خطا در برقراری ارتباط با سرور: " + (error.message || "خطای ناشناخته"));
+    return { ok: false, reason: "UNKNOWN_ERROR" };
   }
-
-  return { ok: true, userId: parseInt(userId) };
-      }
+        }
