@@ -1,88 +1,18 @@
-async function waitForBaleUser(timeout = 6000) {
-  const start = Date.now();
-  while (Date.now() - start < timeout) {
-    if (
-      window.Bale?.WebApp?.initDataUnsafe &&
-      (
-        window.Bale.WebApp.initDataUnsafe.user?.id ||
-        window.Bale.WebApp.initDataUnsafe.user_id ||
-        window.Bale.WebApp.initDataUnsafe.receiver?.id
-      )
-    ) return true;
-
-    await new Promise(r => setTimeout(r, 100));
-  }
-  // پرتاب خطا در صورت تأخیر
-  throw new Error("USER_NOT_READY"); 
-}
-
-function getUserId() {
-  const d = window.Bale.WebApp.initDataUnsafe;
-  return d.user?.id || d.user_id || d.receiver?.id || null;
-}
-
-function safeStart(fn){
-  let done = false;
-  // ما فقط به یک اجرای موفق نیاز داریم، پس زمان‌بندی را کاهش داده و مطمئن‌تر می‌کنیم
-  const safeFn = async () => {
-    if (!done) {
-      done = true;
-      try {
-        await fn();
-      } catch (error) {
-        // خطاهای پرتاب شده را به صفحه می‌فرستیم، مگر اینکه خطای ریدایرکت باشد که توسط خود تابع مدیریت می‌شود.
-        if (error.message !== "REDIRECT_REGISTER" && error.message !== "USER_NOT_READY") {
-          // اگر خطا در جریان اصلی نیست، آن را نمایش می‌دهیم.
-          // توجه: این قسمت باید با منطق displayMessage در loadNotifications هماهنگ باشد.
-          // فعلاً ما فقط مطمئن می‌شویم که خطا به صورت غیرمنتظره ظاهر نشود.
-          console.error("Error in safeStart execution:", error); 
-        }
-      }
-    }
-  };
-  
-  // اجرای سریع و پشت سر هم برای تضمین اجرا
-  setTimeout(safeFn, 200);
-  setTimeout(safeFn, 800);
-  setTimeout(safeFn, 1500);
-}
-
-function displayError(message) {
-  const errorDiv = document.getElementById("error-display");
-  if (errorDiv) {
-    errorDiv.innerText = message;
-    errorDiv.style.display = "block"; // نمایش خطا
-  }
-}
-
-async function ensureRegistered() {
-  if (!window.Bale?.WebApp)
-    return { ok: false, reason: "NOT_IN_BALE" };
-
+function getAuthUser() {
+  const raw = sessionStorage.getItem("bale_user");
+  if (!raw) return null;
   try {
-    await waitForBaleUser();
-    const userId = getUserId();
-    if (!userId)
-      return { ok: false, reason: "NO_USER" };
-
-    const API_BASE = window.API_BASE || "https://insta-api-avn2.onrender.com/api"; 
-
-    const res = await fetch(`${API_BASE}/user_exists/${userId}`);
-    if (!res.ok)
-      return { ok: false, reason: "API_ERROR" };
-
-    const data = await res.json();
-
-    if (!data.exists) {
-      location.replace("register.html");
-      return { ok: false, reason: "REDIRECT_REGISTER" };
-    }
-
-    return { ok: true, userId: parseInt(userId) };
-
-  } catch (error) {
-    // نمایش خطا در صفحه به جای کنسول
-    displayError("خطا در برقراری ارتباط با سرور: " + (error.message || "خطای ناشناخته"));
-    return { ok: false, reason: "UNKNOWN_ERROR" };
+    return JSON.parse(raw);
+  } catch {
+    return null;
   }
-        }
+}
+
+function requireAuth() {
+  const user = getAuthUser();
+  if (!user || !user.id) {
+    location.replace("entry.html");
+    throw new Error("NO_AUTH");
+  }
+  return user;
+}
