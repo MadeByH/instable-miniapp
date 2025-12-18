@@ -120,3 +120,66 @@ button{
   color:white;
   font-size:15px;
   }
+
+.profile-box{
+  max-width:720px;
+  margin:18px auto;
+  padding:14px;
+}
+
+.profile-top{
+  display:flex;
+  gap:20px;
+  align-items:center;
+}
+
+.avatar-lg{
+  width:110px;
+  height:110px;
+  border-radius:50%;
+  object-fit:cover;
+  border:2px solid var(--accent);
+}
+
+.profile-stats{
+  flex:1;
+  display:flex;
+  justify-content:space-around;
+  text-align:center;
+}
+
+.profile-stats div{
+  font-size:14px;
+}
+
+.profile-stats b{
+  display:block;
+  font-size:16px;
+}
+
+.profile-info{
+  margin-top:12px;
+  font-size:14px;
+}
+
+.profile-name{
+  font-weight:600;
+}
+
+.profile-bio{
+  opacity:.9;
+  white-space:pre-line;
+}
+
+.profile-actions{
+  margin-top:14px;
+}
+
+.profile-actions button{
+  width:100%;
+  padding:10px;
+  border-radius:10px;
+  border:none;
+  background:var(--accent);
+  color:white;
+  }
