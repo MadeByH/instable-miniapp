@@ -121,64 +121,58 @@ async function loadNotifications() {
   if (root) root.innerHTML = ''; 
   if (document.getElementById("error-display")) document.getElementById("error-display").style.display = "none";
 
-  try {  
-    const result = await ensureRegistered();  
-        
+  try {
+    const result = await ensureRegistered();
+
     if (result.ok === false) {
         const reason = result.reason;
-
         if (reason === "NOT_IN_BALE") {
-            displayMessage("این سرویس فقط درون اپلیکیشن بله قابل دسترسی است.", true);
+            displayError("این سرویس فقط درون اپلیکیشن بله قابل دسترسی است.");
         } else if (reason === "NO_USER") {
-            displayMessage("خطا در دریافت شناسه کاربری از بله.", true);
+            displayError("خطا در دریافت شناسه کاربری از بله.");
         } else if (reason === "API_ERROR") {
-            displayMessage("خطا در ارتباط با سرور برای تایید ثبت نام.", true);
+            displayError("خطا در ارتباط با سرور برای تایید ثبت نام.");
         } else if (reason === "REDIRECT_REGISTER") {
-            displayMessage("در حال انتقال به صفحه ثبت نام...", false); 
+            displayError("در حال انتقال به صفحه ثبت نام...");
             return;
         }
-
         if (loading) loading.style.display = "none";
         return;
     }
-        
-    const userId = result.userId; 
-    const res = await fetch(`${window.API_BASE}/notifications/${userId}?limit=50`);
 
+    // کد بارگذاری اعلان‌ها ادامه می‌یابد
+    const userId = result.userId; // دریافت userId
+
+    const res = await fetch(`${window.API_BASE}/notifications/${userId}?limit=50`);
     if (!res.ok) {
-        displayMessage(`خطا در دریافت اعلان‌ها (Status: ${res.status})`, true);
+        displayError(`خطا در دریافت اعلان‌ها (Status: ${res.status})`);
         if (loading) loading.style.display = "none";
         return;
     }
 
     const data = await res.json();
-
-    if (!Array.isArray(data) || data.length === 0) {  
-        displayMessage("شما هیچ اعلان جدیدی ندارید.");  
-    } else {  
+    if (!Array.isArray(data) || data.length === 0) {
+        displayError("شما هیچ اعلان جدیدی ندارید.");
+    } else {
         root.innerHTML = ''; 
         data.forEach(n => {  
             const div = document.createElement("div");  
             div.className = "notif";  
             const timestamp = n.created_at || "زمان نامشخص";
-            div.innerHTML = `  
-                <div>${n.text}</div>  
-                <div class="notif-time">${timestamp}</div>  
+            div.innerHTML = `
+                <div>${n.text}</div>
+                <div class="notif-time">${timestamp}</div>
             `;  
             root.appendChild(div);  
         });  
     }
-
   } catch (e) {  
     if (loading) loading.style.display = "none";
-        
-    if (e.message === "REDIRECT_REGISTER") {  
-        displayMessage("در حال انتقال به صفحه ثبت نام...", false);
+    if (e.message === "REDIRECT_REGISTER") {
+        displayError("در حال انتقال به صفحه ثبت نام...");
         return; 
-    } else if (e.message === "USER_NOT_READY") {
-         displayMessage("دریافت اطلاعات بله با تأخیر مواجه شد. لطفا مجدداً بارگذاری نمایید.", true);
-    } else {  
-        displayMessage("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"), true);
+    } else {
+        displayError("خطای سیستمی ناشناخته: " + (e.message || "خطای ناشناخته"));
     }
   } finally {  
     if (loading) loading.style.display = "none";
