@@ -30,6 +30,8 @@ async function loadProfile(){
   const postsEl = document.getElementById("profile-posts");
   const loading = document.getElementById("loading");
 
+  loading.style.display = "block";
+
   try{
     const me = requireAuth();
     const targetId =
@@ -37,9 +39,42 @@ async function loadProfile(){
 
     const isMe = String(me.id) === String(targetId);
 
+    // 1️⃣ اول HTML رو بساز
+    root.innerHTML = `
+      <div class="profile-box">
+        <div class="profile-top">
+          <img class="avatar-lg" id="profileAvatar">
+
+          <div class="profile-stats">
+            <div><b id="postCount">0</b><span>پست</span></div>
+            <div><b id="followerCount">0</b><span>دنبال‌کننده</span></div>
+            <div><b id="followingCount">0</b><span>دنبال‌شده</span></div>
+          </div>
+        </div>
+
+        <div class="profile-info">
+          <div class="profile-name" id="displayName"></div>
+          <div class="profile-bio" id="bio"></div>
+        </div>
+
+        <div class="profile-actions" id="profileActions"></div>
+      </div>
+    `;
+
+    // 2️⃣ حالا المنت‌ها واقعاً وجود دارن
+    const profileAvatar = document.getElementById("profileAvatar");
+    const displayName = document.getElementById("displayName");
+    const bio = document.getElementById("bio");
+    const postCount = document.getElementById("postCount");
+    const followerCount = document.getElementById("followerCount");
+    const followingCount = document.getElementById("followingCount");
+    const profileActions = document.getElementById("profileActions");
+
+    // 3️⃣ دیتا بگیر
     const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
     const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
 
+    // 4️⃣ پر کردن اطلاعات
     profileAvatar.src = user.profile_pic
       ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
       : "https://via.placeholder.com/110";
@@ -48,61 +83,35 @@ async function loadProfile(){
     bio.innerText = user.bio || "";
 
     postCount.innerText = posts.length;
-    followerCount.innerText = user.followers;
-    followingCount.innerText = user.following;
+    followerCount.innerText = user.followers || 0;
+    followingCount.innerText = user.following || 0;
 
-// دکمه‌ها
+    // 5️⃣ دکمه‌ها
     if(isMe){
       profileActions.innerHTML = `
-        <button onclick="location.href='edit-profile.html'">ویرایش پروفایل</button>
-  `;
+        <button onclick="location.href='edit-profile.html'">
+          ویرایش پروفایل
+        </button>
+      `;
     }else{
       profileActions.innerHTML = `
         <button onclick="toggleFollow(${targetId})">
-          ${user.is_following ? "لغو دنبال" : "دنبال کردن"}
+          دنبال کردن
         </button>
-  `;
-}
+      `;
+    }
 
-// گرید پست‌ها
-    profile-posts.innerHTML="";
+    // 6️⃣ گرید پست‌ها
+    postsEl.innerHTML = "";
     posts.forEach(p=>{
-      const img=document.createElement("img");
-      img.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
-      profile-posts.appendChild(img);
-});
-
-    loading.style.display="none";
-
-    root.innerHTML = `
-      <div class="profile-box">
-  <div class="profile-top">
-    <img class="avatar-lg" id="profileAvatar">
-
-    <div class="profile-stats">
-      <div><b id="postCount">0</b><span>پست</span></div>
-      <div><b id="followerCount">0</b><span>دنبال‌کننده</span></div>
-      <div><b id="followingCount">0</b><span>دنبال‌شده</span></div>
-    </div>
-  </div>
-
-  <div class="profile-info">
-    <div class="profile-name" id="displayName"></div>
-    <div class="profile-bio" id="bio"></div>
-  </div>
-
-  <div class="profile-actions" id="profileActions"></div>
-</div>
-    `;
-
-    postsEl.innerHTML="";
-    posts.forEach(p=>{
-      const img=document.createElement("img");
+      const img = document.createElement("img");
       img.src = p.photo
         ? `${API_BASE}/media_proxy?file_id=${p.photo}`
         : "https://via.placeholder.com/300";
       postsEl.appendChild(img);
     });
+
+    loading.style.display = "none";
 
   }catch(e){
     loading.style.display="none";
