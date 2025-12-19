@@ -183,3 +183,60 @@ button{
   background:var(--accent);
   color:white;
   }
+
+.insta-header{
+  justify-content:space-between;
+}
+.logo{
+  font-weight:700;
+  font-size:18px;
+}
+.top-icons span{
+  font-size:20px;
+  margin-left:14px;
+  cursor:pointer;
+}
+
+/* Stories */
+.stories{
+  display:flex;
+  gap:14px;
+  padding:12px;
+  overflow-x:auto;
+}
+.story{
+  width:66px;
+  text-align:center;
+  font-size:12px;
+}
+.story-ring{
+  width:66px;
+  height:66px;
+  border-radius:50%;
+  background:linear-gradient(45deg,#ff00cc,#ff9900);
+  padding:2px;
+}
+.story-ring img{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  background:#111;
+}
+.story.you .story-ring{
+  background:#444;
+  position:relative;
+}
+.story.you .story-ring::after{
+  content:"+";
+  position:absolute;
+  bottom:-2px;
+  right:-2px;
+  width:18px;
+  height:18px;
+  background:var(--accent);
+  border-radius:50%;
+  font-size:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  }
