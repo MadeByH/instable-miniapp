@@ -1,35 +1,71 @@
 <!doctype html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>اکسپلور</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>اکسپلور</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header class="topbar"><h1>اینستا بله</h1></header>
+<header class="topbar">
+  <h1>اکسپلور</h1>
+</header>
 
 <main>
-  <div id="grid" class="grid"></div>
+  <div id="explore-grid" class="explore-grid"></div>
   <div id="loading" class="loading">در حال بارگذاری…</div>
 </main>
 
 <div id="nav"></div>
 
-<script>
-  window.API_BASE = "https://insta-api-avn2.onrender.com/api";
-</script>
-<script src="app.js"></script>
+<script src="auth.js"></script>
 <script src="https://tapi.bale.ai/miniapp.js?3"></script>
 
 <script>
-  if (window.Bale?.WebApp) Bale.WebApp.ready();
-  window.initExplore();
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-  fetch("nav.html")
-    .then(r => r.text())
-    .then(html => document.getElementById("nav").innerHTML = html);
+if (window.Bale?.WebApp) Bale.WebApp.ready();
+
+async function loadExplore(){
+  const grid = document.getElementById("explore-grid");
+  const loading = document.getElementById("loading");
+
+  loading.style.display = "block";
+
+  try{
+    requireAuth();
+
+    const posts = await fetch(`${API_BASE}/explore`).then(r=>r.json());
+
+    grid.innerHTML = "";
+
+    posts.forEach((p,i)=>{
+      const item = document.createElement("div");
+      item.className = "explore-item" + (i % 7 === 0 ? " big" : "");
+
+      const img = document.createElement("img");
+      img.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
+
+      img.onclick = ()=>location.href = `post.html?id=${p.post_id}`;
+
+      item.appendChild(img);
+      grid.appendChild(item);
+    });
+
+    loading.style.display = "none";
+
+  }catch(e){
+    loading.innerText = "خطا در بارگذاری اکسپلور";
+  }
+}
+
+loadExplore();
+
+fetch("nav.html")
+  .then(r=>r.text())
+  .then(html=>nav.innerHTML=html);
 </script>
 
 </body>
