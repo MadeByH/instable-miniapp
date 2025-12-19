@@ -184,6 +184,19 @@ button{
   color:white;
   }
 
+.profile-grid img{
+  width:100%;
+  aspect-ratio:1/1;     /* مربع دقیق مثل اینستا */
+  object-fit:cover;
+  display:block;
+}
+.profile-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:2px;              /* فاصله کم مثل اینستا */
+  margin-top:10px;
+    }
+
 .insta-header{
   justify-content:space-between;
 }
