@@ -55,14 +55,17 @@
 <div id="nav"></div>
 
 <script>
+// 1. بارگذاری ناوبری
 fetch("nav.html")
 .then(r=>r.text())
 .then(html=>{
   document.getElementById("nav").innerHTML = html;
 });
 
+// 2. تغییر مسیر کلیک به newpost.html
 document.getElementById("uploadBtn").onclick = ()=>{
-  location.href = "bale://chat?name=baleinstagram_bot&start=new_post";
+  // تغییر مسیر به newpost.html
+  location.href = "newpost.html"; 
 };
 </script>
 </body>
