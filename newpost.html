@@ -1,12 +1,40 @@
 <!doctype html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8">
-  <title>New Post</title>
-  <meta http-equiv="refresh"
-        content="0; url=bale.ai://resolve?domain=baleinstagram_bot&start=new_post">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ثبت پست</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-در حال انتقال…
+
+<header class="topbar">
+  <h1>ثبت پست</h1>
+</header>
+
+<main style="text-align:center;padding:60px 20px">
+  <p style="font-size:16px;color:#9eb0c8">
+    برای ثبت پست، وارد ربات شوید
+  </p>
+
+  <button id="goBot" class="btn" style="margin-top:20px">
+    باز کردن ربات
+  </button>
+</main>
+
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+
+<script>
+document.getElementById("goBot").onclick = () => {
+  Bale.WebApp.openLink(
+    "https://ble.ir/baleinstagram_bot?start=new_post"
+  );
+
+  // اختیاری: بستن مینی‌اپ
+  setTimeout(()=>Bale.WebApp.close(), 300);
+};
+</script>
+
 </body>
 </html>
