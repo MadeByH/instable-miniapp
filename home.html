@@ -1,74 +1,106 @@
 <!doctype html>
 <html lang="fa">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Home</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>خانه</title>
+<link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-<header class="topbar">
-  <h1>Instable</h1>
+<!-- 🔝 Header -->
+<header class="topbar insta-header">
+  <span class="logo">InstaBale</span>
+  <div class="top-icons">
+    <span>➕</span>
+    <span onclick="location.href='notifications.html'">❤️</span>
+  </div>
 </header>
 
+<!-- 📸 Stories -->
+<div class="stories" id="stories"></div>
+
+<!-- 📰 Feed -->
 <main id="feed"></main>
-<div id="loading" class="loading">در حال بارگذاری پست‌ها…</div>
+<div id="loading" class="loading">در حال بارگذاری…</div>
 
 <div id="nav"></div>
 
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
 <script src="auth.js"></script>
+
 <script>
 const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
-let me;
-try {
-  me = requireAuth();
-} catch {
-  // ریدایرکت شده
+/* -------------------------
+   Stories (فعلاً فیک)
+-------------------------- */
+const stories = document.getElementById("stories");
+
+stories.innerHTML = `
+  <div class="story you">
+    <div class="story-ring">
+      <img src="https://via.placeholder.com/60">
+    </div>
+    شما
+  </div>
+`;
+
+for(let i=1;i<=8;i++){
+  stories.innerHTML += `
+    <div class="story">
+      <div class="story-ring">
+        <img src="https://via.placeholder.com/60">
+      </div>
+      user${i}
+    </div>
+  `;
 }
 
+/* -------------------------
+   Feed
+-------------------------- */
 async function loadFeed(){
   const feed = document.getElementById("feed");
   const loading = document.getElementById("loading");
 
-  try {
+  try{
+    const me = requireAuth();
+
     const res = await fetch(`${API_BASE}/get_feed/${me.id}`);
     const posts = await res.json();
 
-    loading.style.display = "none";
+    feed.innerHTML = "";
 
-    if (!Array.isArray(posts) || posts.length === 0) {
-      feed.innerHTML = `<p class="center-msg">هنوز پستی وجود ندارد</p>`;
-      return;
-    }
-
-    posts.forEach(p => {
+    posts.forEach(p=>{
       const div = document.createElement("div");
       div.className = "post";
 
-      const imgUrl = p.photo
-        ? `${API_BASE}/media_proxy?file_id=${p.photo}`
-        : "https://via.placeholder.com/600";
-
       div.innerHTML = `
         <div class="post-header">
-          <span class="avatar-sm">👤</span>
-          <span class="username">user ${p.user_id}</span>
+          <div class="avatar-sm">👤</div>
+          <span class="username">user_${p.user_id}</span>
         </div>
 
-        <img class="post-img" src="${imgUrl}">
+        <img class="post-img"
+          src="${p.photo ? API_BASE + '/media_proxy?file_id=' + p.photo : 'https://via.placeholder.com/400'}">
 
         <div class="post-actions">
-          ❤️ ${p.likes || 0}
+          <div>
+            ❤️ 💬 📤
+          </div>
+          <div class="likes">${p.likes || 0} پسند</div>
         </div>
       `;
 
       feed.appendChild(div);
     });
 
-  } catch {
-    loading.innerText = "❌ خطا در بارگذاری فید";
+  }catch(e){
+    feed.innerHTML = `<p class="center-msg">خطا در بارگذاری فید</p>`;
+  }finally{
+    loading.style.display="none";
   }
 }
 
@@ -77,8 +109,8 @@ loadFeed();
 
 <script>
 fetch("nav.html")
-  .then(r => r.text())
-  .then(html => document.getElementById("nav").innerHTML = html);
+  .then(r=>r.text())
+  .then(html=>nav.innerHTML=html);
 </script>
 
 </body>
