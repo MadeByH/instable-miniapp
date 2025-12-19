@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="fa">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ویرایش پروفایل</title>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+  <h1>ویرایش پروفایل</h1>
+</header>
+
+<main class="card" style="margin:20px;">
+  <img id="avatar" class="avatar"
+       src="https://via.placeholder.com/110">
+
+  <input id="displayName" placeholder="نام نمایشی">
+  <textarea id="bio" placeholder="بیو"></textarea>
+
+  <input type="file" id="photoInput" accept="image/*">
+
+  <button onclick="saveProfile()">ذخیره تغییرات</button>
+  <p id="msg" class="center-msg"></p>
+</main>
+
+<script src="auth.js"></script>
+<script>
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
+
+let uploadedFileId = null;
+
+async function loadProfile(){
+  const me = requireAuth();
+  const user = await fetch(`${API_BASE}/get_user/${me.id}`).then(r=>r.json());
+
+  displayName.value = user.display_name;
+  bio.value = user.bio || "";
+
+  if(user.profile_pic){
+    avatar.src = `${API_BASE}/media_proxy?file_id=${user.profile_pic}`;
+    uploadedFileId = user.profile_pic;
+  }
+}
+
+photoInput.onchange = async () => {
+  const file = photoInput.files[0];
+  if(!file) return;
+
+  const fd = new FormData();
+  fd.append("file", file);
+
+  msg.innerText = "در حال آپلود تصویر…";
+
+  const res = await fetch(`${API_BASE}/upload`, {
+    method: "POST",
+    body: fd
+  });
+
+  const data = await res.json();
+  uploadedFileId = data.file_id;
+
+  avatar.src = URL.createObjectURL(file);
+  msg.innerText = "تصویر آماده شد";
+};
+
+async function saveProfile(){
+  msg.innerText = "در حال ذخیره…";
+
+  try{
+    const me = requireAuth();
+
+    const res = await fetch(`${API_BASE}/update_profile`,{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({
+        user_id: me.id,
+        display_name: displayName.value.trim(),
+        bio: bio.value.trim(),
+        profile_pic: uploadedFileId
+      })
+    });
+
+    if(!res.ok) throw "";
+
+    location.replace("profile.html");
+
+  }catch{
+    msg.innerText = "خطا در ذخیره اطلاعات";
+  }
+}
+
+loadProfile();
+</script>
+
+</body>
+</html>
