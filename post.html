@@ -136,47 +136,40 @@ body {
 }
 
 /* Comment Box (Fixed Bottom) */
-@media (max-height: 600px) {
 .comment-box-fixed-bottom {
-    bottom: env(safe-area-inset-bottom);
-    left: 0;
-    right: 0;
-    max-width: 520px;
-    margin: 0 auto;
-    padding: 10px 15px;
-    background: #000000;
-    border-top: 1px solid #262626;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    z-index: 60;
-}
-}
+  position: fixed;
+  bottom: env(safe-area-inset-bottom);
+  left: 0;
+  right: 0;
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 8px 12px;
+  background: #000;
+  border-top: 1px solid #262626;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 60;
+    }
 .comment-box-fixed-bottom .avatar-sm { flex-shrink: 0; }
 
-.comment-box-fixed-bottom input{
-  flex:1;
-  padding: 8px 12px;
-  border-radius: 20px;
+.comment-box-fixed-bottom input {
+  flex: 1;
+  min-height: 36px;
+  padding: 8px 14px;
+  border-radius: 18px;
   border: 1px solid #3a3a3a;
   background: #1c1c1c;
   color: #fff;
   font-size: 14px;
-  outline: none;
-}
+    }
 
-.comment-box-fixed-bottom button{
-  padding: 0 14px;
+.comment-box-fixed-bottom button {
   height: 36px;
-  border-radius: 18px;
-  border:none;
-  background: none;
-  color: var(--accent);
+  padding: 0 10px;
+  font-size: 14px;
   font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: none; /* مخفی است تا زمانی که متن وارد شود */
-}
+    }
 
 .comment-box-fixed-bottom button:disabled {
     opacity: 0.3;
@@ -288,17 +281,22 @@ function focusCommentInput() {
 }
 
 function handleBack() {
-    if (isCommentsPage) {
-        history.back();
-    } else {
-        // رفتار پیش‌فرض برای برگشت به صفحه قبلی در اپلیکیشن
-        if (window.Bale?.WebApp) {
-            Bale.WebApp.close();
-        } else {
-            window.history.back();
-        }
+  if (isCommentsPage) {
+    history.back();
+    return;
+  }
+
+  // اگر history داریم، برگرد
+  if (window.history.length > 1) {
+    history.back();
+    return;
+  }
+
+  // فقط اگر واقعاً جایی برای برگشت نبود
+  if (window.Bale?.WebApp) {
+    Bale.WebApp.close();
+  }
     }
-}
 
 window.addEventListener("popstate", () => {
     if (isCommentsPage) {
