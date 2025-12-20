@@ -221,6 +221,7 @@ const pageTitle = document.getElementById("pageTitle");
 const fixedCommentBox = document.getElementById("commentBoxFixed");
 const commentInput = document.getElementById("commentInput");
 const sendButton = document.getElementById("sendButton");
+const navBar = document.getElementById("nav");
 
 let currentPostId = null;
 let isCommentsPage = false; 
@@ -370,17 +371,9 @@ async function loadPost(fullLoad = false){
             headerBar.style.display = 'flex';
             fixedCommentBox.style.display = 'none';
             pageTitle.innerText = 'پست';
+            navBar.style.display = "block";
             
             root.innerHTML = `
-              <div class="comments-page-header">
-                <span onclick="handleBack()">
-                  <i class="fas fa-arrow-left"></i>
-                </span>
-                <h2>دیدگاه‌ها</h2>
-                <span style="visibility:hidden;">
-                  <i class="fas fa-arrow-left"></i>
-                </span>
-              </div>
               <div class="post-media">
                 ${
                   post.type === "video"
@@ -441,6 +434,19 @@ async function loadPost(fullLoad = false){
             headerBar.style.display = 'none'; // هدر اصلی پنهان، هدر صفحه کامنت‌ها نمایش داده می‌شود
             fixedCommentBox.style.display = 'flex';
             pageTitle.innerText = 'دیدگاه‌ها';
+            navBar.style.display = "none";
+
+            const commentsPageHeader = `
+  <div class="comments-page-header">
+    <span onclick="handleBack()">
+      <i class="fas fa-arrow-left"></i>
+    </span>
+    <h2>دیدگاه‌ها</h2>
+    <span style="visibility:hidden;">
+      <i class="fas fa-arrow-left"></i>
+    </span>
+  </div>
+`;
             
             // --- ساختار بالای صفحه کامنت‌ها (مدیا و هدر پست) ---
             const commentsHeaderSection = `
@@ -495,7 +501,10 @@ async function loadPost(fullLoad = false){
                 `;
             }).join("");
             
-            root.innerHTML = commentsHeaderSection + `<div class="comment-list">${commentItemsHtml}</div>`;
+            root.innerHTML =
+  commentsPageHeader +
+  commentsHeaderSection +
+  `<div class="comment-list">${commentItemsHtml}</div>`;
             
             // اسکرول به پایین برای نمایش باکس کامنت
             setTimeout(() => {
