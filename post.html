@@ -225,6 +225,8 @@ const sendButton = document.getElementById("sendButton");
 let currentPostId = null;
 let isCommentsPage = false; 
 let postData = null; // برای نگهداری داده‌های پست برای دسترسی سریع
+let liked = false;
+let saved = false;
 
 // --- Utility Functions ---
 
@@ -316,8 +318,8 @@ async function loadPost(fullLoad = false){
         postData = post; // ذخیره داده‌ها برای استفاده در توابع دیگر
         
         // برای نمایش وضعیت اولیه لایک و ذخیره، فرض می‌کنیم از وضعیت دریافتی استفاده می‌کنیم
-        const isLiked = post.is_liked || false;
-        const isSaved = post.is_saved || false;
+        const Liked = post.is_liked;
+        const Saved = post.is_saved;
         
         // در حالت صفحه کامنت‌ها، وضعیت را برای دکمه ارسال تنظیم می‌کنیم (به طور پیش‌فرض غیرفعال است مگر کاربر تایپ کند)
         if(fullLoad) {
@@ -485,6 +487,23 @@ async function toggleAction(type, postId){
     });
   }
 }
+
+async function toggleSave(){
+  const me = requireAuth();
+  saved = !saved;
+
+  const icon = document.getElementById("saveIcon");
+  icon.className = getActionIcon(saved, "save");
+
+  fetch(`${API_BASE}/save`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      user_id: me.id,
+      post_id: currentPostId
+    })
+  });
+    }
 
 async function sendComment(postId){
   const me = requireAuth();
