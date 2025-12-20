@@ -8,13 +8,18 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-/* ===== Explore Header ===== */
+/* ===== Header ===== */
 .explore-header{
-  padding:10px;
+  padding:10px 12px;
   border-bottom:1px solid #1f2937;
+  background:#05060a;
+  position:sticky;
+  top:0;
+  z-index:10;
 }
 
 .search-wrap{
+  width:100%;
   display:flex;
   align-items:center;
   gap:8px;
@@ -30,6 +35,10 @@
   padding:0 12px;
   font-size:14px;
   outline:none;
+
+  direction: rtl;
+  unicode-bidi: plaintext;
+  line-height:38px;
 }
 
 .search-wrap input::placeholder{
@@ -40,12 +49,12 @@
   display:none;
   background:none;
   border:none;
-  color:#ff3d71;
+  color:#ff4d67;
   font-size:14px;
   cursor:pointer;
 }
 
-/* ===== Explore Grid ===== */
+/* ===== Grid ===== */
 .explore-grid{
   display:grid;
   grid-template-columns:repeat(3,1fr);
@@ -56,6 +65,7 @@
   position:relative;
   aspect-ratio:1/1;
   overflow:hidden;
+  background:#000;
 }
 
 .explore-item.big{
@@ -71,6 +81,7 @@
   display:block;
 }
 
+/* ===== Loading ===== */
 .loading{
   text-align:center;
   padding:20px;
@@ -81,11 +92,10 @@
 
 <body>
 
-<header class="topbar explore-header">
+<header class="explore-header">
   <div class="search-wrap">
     <input
       id="searchInput"
-      type="text"
       placeholder="جستجو"
       oninput="onSearchInput()"
     >
@@ -94,7 +104,7 @@
 </header>
 
 <main>
-  <div id="explore-grid" class="explore-grid"></div>
+  <div id="exploreGrid" class="explore-grid"></div>
   <div id="loading" class="loading">در حال بارگذاری…</div>
 </main>
 
@@ -108,71 +118,78 @@ const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
 if (window.Bale?.WebApp) Bale.WebApp.ready();
 
-const grid = document.getElementById("explore-grid");
+const grid = document.getElementById("exploreGrid");
 const loading = document.getElementById("loading");
 const searchInput = document.getElementById("searchInput");
 const cancelBtn = document.getElementById("cancelSearch");
 
+let page = 1;
+let isLoading = false;
 let searchTimeout = null;
 
-/* ===============================
-   Load Explore (default)
-================================ */
-async function loadExplore(){
+/* =====================
+   Load Explore
+===================== */
+async function loadExplore(reset=true){
+  if(isLoading) return;
+  isLoading = true;
+
+  if(reset){
+    grid.innerHTML = "";
+    page = 1;
+  }
+
   loading.style.display = "block";
-  grid.innerHTML = "";
 
   try{
     requireAuth();
-
-    const res = await fetch(`${API_BASE}/get_explore`);
+    const res = await fetch(`${API_BASE}/get_explore?page=${page}`);
     const posts = await res.json();
-
     renderPosts(posts);
-
+    page++;
   }catch(e){
-    loading.innerText = "خطا در بارگذاری اکسپلور";
+    loading.innerText = "خطا در بارگذاری";
   }
 
   loading.style.display = "none";
+  isLoading = false;
 }
 
-/* ===============================
-   Render Posts (img + video)
-================================ */
+/* =====================
+   Render
+===================== */
 function renderPosts(posts){
-  grid.innerHTML = "";
-
   posts.forEach((p,i)=>{
     const item = document.createElement("div");
-    item.className = "explore-item" + (i % 7 === 0 ? " big" : "");
+    item.className = "explore-item" + ((grid.children.length+i) % 7 === 0 ? " big" : "");
 
     let media;
 
     if(p.type === "video"){
       media = document.createElement("video");
       media.src = `${API_BASE}/media_proxy?file_id=${p.video_id}`;
+      media.poster = `${API_BASE}/media_proxy?file_id=${p.photo}`;
       media.muted = true;
       media.loop = true;
       media.autoplay = true;
       media.playsInline = true;
+      media.preload = "metadata";
+      media.loading = "lazy";
     }else{
       media = document.createElement("img");
       media.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
+      media.loading = "lazy";
     }
 
-    media.onclick = ()=>{
-      location.href = `post.html?id=${p.post_id}`;
-    };
-
+    media.onclick = ()=>location.href=`post.html?id=${p.post_id}`;
     item.appendChild(media);
     grid.appendChild(item);
   });
 }
 
-/* ===============================
+/* =====================
    Search
-================================ */
+===================== */
 function onSearchInput(){
   const q = searchInput.value.trim();
   cancelBtn.style.display = q ? "block" : "none";
@@ -180,13 +197,11 @@ function onSearchInput(){
   clearTimeout(searchTimeout);
 
   if(!q){
-    loadExplore();
+    loadExplore(true);
     return;
   }
 
-  searchTimeout = setTimeout(()=>{
-    searchExplore(q);
-  }, 400);
+  searchTimeout = setTimeout(()=>searchExplore(q), 400);
 }
 
 async function searchExplore(q){
@@ -194,14 +209,10 @@ async function searchExplore(q){
   grid.innerHTML = "";
 
   try{
-    const res = await fetch(
-      `${API_BASE}/search?q=${encodeURIComponent(q)}`
-    );
+    const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(q)}`);
     const posts = await res.json();
     renderPosts(posts);
-  }catch(e){
-    console.error(e);
-  }
+  }catch(e){}
 
   loading.style.display = "none";
 }
@@ -209,12 +220,21 @@ async function searchExplore(q){
 function cancelSearch(){
   searchInput.value = "";
   cancelBtn.style.display = "none";
-  loadExplore();
+  loadExplore(true);
 }
 
-/* ===============================
+/* =====================
+   Infinite Scroll
+===================== */
+window.addEventListener("scroll", ()=>{
+  if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 300){
+    loadExplore(false);
+  }
+});
+
+/* =====================
    Init
-================================ */
+===================== */
 loadExplore();
 
 fetch("nav.html")
@@ -223,4 +243,4 @@ fetch("nav.html")
 </script>
 
 </body>
-  </html>
+</html>
