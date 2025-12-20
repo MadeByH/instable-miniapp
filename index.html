@@ -4,13 +4,93 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>اکسپلور</title>
+
 <link rel="stylesheet" href="style.css">
+
+<style>
+/* ===== Explore Header ===== */
+.explore-header{
+  padding:10px;
+  border-bottom:1px solid #1f2937;
+}
+
+.search-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.search-wrap input{
+  flex:1;
+  height:38px;
+  border-radius:10px;
+  border:none;
+  background:#1b2330;
+  color:#fff;
+  padding:0 12px;
+  font-size:14px;
+  outline:none;
+}
+
+.search-wrap input::placeholder{
+  color:#9eb0c8;
+}
+
+#cancelSearch{
+  display:none;
+  background:none;
+  border:none;
+  color:#ff3d71;
+  font-size:14px;
+  cursor:pointer;
+}
+
+/* ===== Explore Grid ===== */
+.explore-grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:2px;
+}
+
+.explore-item{
+  position:relative;
+  aspect-ratio:1/1;
+  overflow:hidden;
+}
+
+.explore-item.big{
+  grid-column:span 2;
+  grid-row:span 2;
+}
+
+.explore-item img,
+.explore-item video{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+.loading{
+  text-align:center;
+  padding:20px;
+  color:#9eb0c8;
+}
+</style>
 </head>
 
 <body>
 
-<header class="topbar">
-  <h1>اکسپلور</h1>
+<header class="topbar explore-header">
+  <div class="search-wrap">
+    <input
+      id="searchInput"
+      type="text"
+      placeholder="جستجو"
+      oninput="onSearchInput()"
+    >
+    <button id="cancelSearch" onclick="cancelSearch()">لغو</button>
+  </div>
 </header>
 
 <main>
@@ -28,45 +108,119 @@ const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
 if (window.Bale?.WebApp) Bale.WebApp.ready();
 
-async function loadExplore(){
-  const grid = document.getElementById("explore-grid");
-  const loading = document.getElementById("loading");
+const grid = document.getElementById("explore-grid");
+const loading = document.getElementById("loading");
+const searchInput = document.getElementById("searchInput");
+const cancelBtn = document.getElementById("cancelSearch");
 
+let searchTimeout = null;
+
+/* ===============================
+   Load Explore (default)
+================================ */
+async function loadExplore(){
   loading.style.display = "block";
+  grid.innerHTML = "";
 
   try{
     requireAuth();
 
-    const posts = await fetch(`${API_BASE}/explore`).then(r=>r.json());
+    const res = await fetch(`${API_BASE}/get_explore`);
+    const posts = await res.json();
 
-    grid.innerHTML = "";
-
-    posts.forEach((p,i)=>{
-      const item = document.createElement("div");
-      item.className = "explore-item" + (i % 7 === 0 ? " big" : "");
-
-      const img = document.createElement("img");
-      img.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
-
-      img.onclick = ()=>location.href = `post.html?id=${p.post_id}`;
-
-      item.appendChild(img);
-      grid.appendChild(item);
-    });
-
-    loading.style.display = "none";
+    renderPosts(posts);
 
   }catch(e){
     loading.innerText = "خطا در بارگذاری اکسپلور";
   }
+
+  loading.style.display = "none";
 }
 
+/* ===============================
+   Render Posts (img + video)
+================================ */
+function renderPosts(posts){
+  grid.innerHTML = "";
+
+  posts.forEach((p,i)=>{
+    const item = document.createElement("div");
+    item.className = "explore-item" + (i % 7 === 0 ? " big" : "");
+
+    let media;
+
+    if(p.type === "video"){
+      media = document.createElement("video");
+      media.src = `${API_BASE}/media_proxy?file_id=${p.video_id}`;
+      media.muted = true;
+      media.loop = true;
+      media.autoplay = true;
+      media.playsInline = true;
+    }else{
+      media = document.createElement("img");
+      media.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
+    }
+
+    media.onclick = ()=>{
+      location.href = `post.html?id=${p.post_id}`;
+    };
+
+    item.appendChild(media);
+    grid.appendChild(item);
+  });
+}
+
+/* ===============================
+   Search
+================================ */
+function onSearchInput(){
+  const q = searchInput.value.trim();
+  cancelBtn.style.display = q ? "block" : "none";
+
+  clearTimeout(searchTimeout);
+
+  if(!q){
+    loadExplore();
+    return;
+  }
+
+  searchTimeout = setTimeout(()=>{
+    searchExplore(q);
+  }, 400);
+}
+
+async function searchExplore(q){
+  loading.style.display = "block";
+  grid.innerHTML = "";
+
+  try{
+    const res = await fetch(
+      `${API_BASE}/search?q=${encodeURIComponent(q)}`
+    );
+    const posts = await res.json();
+    renderPosts(posts);
+  }catch(e){
+    console.error(e);
+  }
+
+  loading.style.display = "none";
+}
+
+function cancelSearch(){
+  searchInput.value = "";
+  cancelBtn.style.display = "none";
+  loadExplore();
+}
+
+/* ===============================
+   Init
+================================ */
 loadExplore();
 
 fetch("nav.html")
   .then(r=>r.text())
-  .then(html=>nav.innerHTML=html);
+  .then(html=>nav.innerHTML = html);
 </script>
 
 </body>
-</html>
+  </html>
