@@ -8,108 +8,110 @@
 <link rel="stylesheet" href="style.css">
 
 <style>
-.post-page{
-  max-width:520px;
-  margin:0 auto;
+/* ===== Skeleton ===== */
+.skeleton{
+  background:linear-gradient(
+    90deg,
+    #1a1a1a 25%,
+    #2a2a2a 37%,
+    #1a1a1a 63%
+  );
+  background-size:400% 100%;
+  animation:skeleton 1.4s ease infinite;
+}
+@keyframes skeleton{
+  0%{background-position:100% 0}
+  100%{background-position:0 0}
 }
 
+/* ===== Layout ===== */
+.post-page{max-width:520px;margin:0 auto}
+.post-media{position:relative;background:#000}
 .post-media img,
-.post-media video{
-  width:100%;
-  display:block;
-  background:#000;
+.post-media video{width:100%;display:block}
+
+/* ===== Heart Animation ===== */
+.heart{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%) scale(0);
+  font-size:90px;
+  opacity:0;
+  pointer-events:none;
+  transition:.3s;
+}
+.heart.show{
+  transform:translate(-50%,-50%) scale(1);
+  opacity:1;
 }
 
+/* ===== Header ===== */
 .post-header{
   display:flex;
   align-items:center;
-  gap:10px;
+  gap:8px;
   padding:10px;
   font-size:14px;
 }
+.username{font-weight:600}
 
-.post-header .username{
-  font-weight:600;
-}
-
-.post-actions{
-  padding:8px 10px;
-}
-
+/* ===== Actions ===== */
+.post-actions{padding:10px}
 .action-row{
   display:flex;
   justify-content:space-between;
-  align-items:center;
   font-size:22px;
 }
-
 .action-left span,
 .action-right span{
   margin-left:14px;
   cursor:pointer;
 }
+.likes-count{font-size:14px;margin-top:6px}
+.caption{font-size:14px;margin-top:4px}
 
-.likes-count{
-  font-size:14px;
-  margin-top:6px;
-}
-
-.caption{
-  font-size:14px;
-  margin-top:4px;
-}
-
-.comments{
-  margin-top:10px;
-  font-size:14px;
-}
-
-.comment{
-  margin-top:4px;
-}
-
-.comment b{
-  margin-left:4px;
-}
-
+/* ===== Comments ===== */
 .comment-box{
   display:flex;
-  gap:6px;
-  margin-top:10px;
+  align-items:center;
+  gap:8px;
+  margin-top:12px;
 }
-
 .comment-box input{
   flex:1;
-  padding:8px 10px;
-  border-radius:10px;
+  height:36px;
+  padding:0 12px;
+  border-radius:18px;
   border:none;
   background:#1c1c1c;
   color:#fff;
 }
-
 .comment-box button{
-  padding:8px 14px;
-  border-radius:10px;
+  background:none;
   border:none;
-  background:var(--accent);
-  color:#fff;
-}
-
-.back-btn{
+  color:var(--accent);
+  font-size:14px;
   cursor:pointer;
 }
+.comment{font-size:14px;margin-top:4px}
+.comment b{margin-left:4px}
 </style>
 </head>
 
 <body>
 
 <header class="topbar">
-  <span class="back-btn" onclick="history.back()">◀</span>
+  <span onclick="history.back()">◀</span>
   <h1>پست</h1>
 </header>
 
-<main class="post-page" id="postRoot">
-  <div class="loading">در حال بارگذاری…</div>
+<main class="post-page">
+  <div class="post-media skeleton" id="mediaBox">
+    <div class="heart" id="heart">❤️</div>
+  </div>
+
+  <div id="postBody" class="skeleton" style="height:200px"></div>
 </main>
 
 <div id="nav"></div>
@@ -119,132 +121,148 @@
 
 <script>
 const API_BASE = "https://insta-api-avn2.onrender.com/api";
-if (window.Bale?.WebApp) Bale.WebApp.ready();
+const postId = new URLSearchParams(location.search).get("id");
 
-const root = document.getElementById("postRoot");
+const mediaBox = document.getElementById("mediaBox");
+const postBody = document.getElementById("postBody");
+const heart = document.getElementById("heart");
 
+let post = null;
+let lastTap = 0;
+
+/* =====================
+   Load Media FAST
+===================== */
 async function loadPost(){
-  try{
-    const me = requireAuth();
-    const id = new URLSearchParams(location.search).get("id");
+  requireAuth();
 
-    const post = await fetch(`${API_BASE}/get_post/${id}`).then(r=>r.json());
+  post = await fetch(`${API_BASE}/get_post/${postId}`).then(r=>r.json());
 
-    root.innerHTML = `
-      <div class="post-media">
-        ${
-          post.type === "video"
-          ? `<video id="postVideo"
-                   src="${API_BASE}/media_proxy?file_id=${post.video_id}"
-                   muted
-                   autoplay
-                   loop
-                   playsinline></video>`
-          : `<img src="${API_BASE}/media_proxy?file_id=${post.photo}">`
-        }
-      </div>
+  mediaBox.classList.remove("skeleton");
+  postBody.classList.remove("skeleton");
 
-      <div class="post-header">
-        <div class="avatar-sm"></div>
-        <div class="username">${post.user_id}</div>
-      </div>
-
-      <div class="post-actions">
-        <div class="action-row">
-          <div class="action-left">
-            <span onclick="toggleLike(${post.post_id})">❤️</span>
-            <span>💬</span>
-            <span>📤</span>
-          </div>
-          <div class="action-right">
-            <span onclick="toggleSave(${post.post_id})">💾</span>
-          </div>
-        </div>
-
-        <div class="likes-count" id="likeCount">
-          ${post.likes} پسند
-        </div>
-
-        <div class="caption">
-          ${post.caption || ""}
-        </div>
-
-        <div class="comments" id="comments">
-          ${
-            post.comments.map(c=>`
-              <div class="comment">
-                <b>${c.username || c.user_id}</b> ${c.text}
-              </div>
-            `).join("")
-          }
-        </div>
-
-        <div class="comment-box">
-          <input id="commentInput" placeholder="افزودن نظر…">
-          <button onclick="sendComment(${post.post_id})">ارسال</button>
-        </div>
-      </div>
-    `;
-
-    // tap روی ویدیو = صدا دار
-    const vid = document.getElementById("postVideo");
-    if(vid){
-      vid.onclick = ()=>{
-        vid.muted = !vid.muted;
-      };
+  mediaBox.innerHTML = `
+    ${
+      post.type === "video"
+      ? `<video src="${API_BASE}/media_proxy?file_id=${post.video_id}"
+               autoplay loop muted playsinline></video>`
+      : `<img src="${API_BASE}/media_proxy?file_id=${post.photo}">`
     }
+    <div class="heart" id="heart">❤️</div>
+  `;
 
-  }catch(e){
-    root.innerHTML = `<p class="center-msg">خطا در بارگذاری پست</p>`;
+  renderBody();
+  enableDoubleTap();
+}
+
+/* =====================
+   Render Body
+===================== */
+function renderBody(){
+  postBody.innerHTML = `
+    <div class="post-header">
+      <div class="avatar-sm"></div>
+      <div class="username">${post.user_id}</div>
+    </div>
+
+    <div class="post-actions">
+      <div class="action-row">
+        <div class="action-left">
+          <span onclick="toggleLike()">❤️</span>
+          <span>💬</span>
+          <span>📤</span>
+        </div>
+        <div class="action-right">
+          <span>💾</span>
+        </div>
+      </div>
+
+      <div class="likes-count" id="likeCount">${post.likes} پسند</div>
+      <div class="caption">${post.caption || ""}</div>
+
+      <div id="comments"></div>
+
+      <div class="comment-box">
+        <input id="commentInput" placeholder="افزودن نظر…">
+        <button onclick="sendComment()">ارسال</button>
+      </div>
+    </div>
+  `;
+
+  loadComments();
+}
+
+/* =====================
+   Double Tap Like
+===================== */
+function enableDoubleTap(){
+  mediaBox.onclick = ()=>{
+    const now = Date.now();
+    if(now - lastTap < 300){
+      showHeart();
+      toggleLike(true);
+    }
+    lastTap = now;
+  };
+}
+
+function showHeart(){
+  heart.classList.add("show");
+  setTimeout(()=>heart.classList.remove("show"),600);
+}
+
+/* =====================
+   Like (Optimistic)
+===================== */
+async function toggleLike(fromDoubleTap=false){
+  if(fromDoubleTap){
+    post.likes++;
+    document.getElementById("likeCount").innerText =
+      post.likes + " پسند";
   }
-}
 
-/* ===== Actions ===== */
-
-async function toggleLike(postId){
   const me = requireAuth();
-  const res = await fetch(`${API_BASE}/like`,{
+  fetch(`${API_BASE}/like`,{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      user_id: me.id,
-      post_id: postId
-    })
-  });
-
-  if(res.ok) loadPost();
-}
-
-async function toggleSave(postId){
-  const me = requireAuth();
-  await fetch(`${API_BASE}/save`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      user_id: me.id,
-      post_id: postId
-    })
+    body:JSON.stringify({ user_id:me.id, post_id:postId })
   });
 }
 
-async function sendComment(postId){
+/* =====================
+   Comments
+===================== */
+async function loadComments(){
+  const res = await fetch(`${API_BASE}/get_comments/${postId}`);
+  const comments = await res.json();
+
+  document.getElementById("comments").innerHTML =
+    comments.map(c=>`
+      <div class="comment">
+        <b>${c.username || c.user_id}</b> ${c.text}
+      </div>
+    `).join("");
+}
+
+async function sendComment(){
   const me = requireAuth();
   const input = document.getElementById("commentInput");
   const text = input.value.trim();
   if(!text) return;
 
+  input.value="";
+
   await fetch(`${API_BASE}/comment`,{
     method:"POST",
     headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({
-      user_id: me.id,
-      post_id: postId,
+    body:JSON.stringify({
+      user_id:me.id,
+      post_id:postId,
       text
     })
   });
 
-  input.value = "";
-  loadPost();
+  loadComments();
 }
 
 loadPost();
