@@ -33,8 +33,66 @@
 }
 
 .post-actions{
-  padding:10px;
+  padding:8px 10px;
+}
+
+.action-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:22px;
+}
+
+.action-left span,
+.action-right span{
+  margin-left:14px;
+  cursor:pointer;
+}
+
+.likes-count{
   font-size:14px;
+  margin-top:6px;
+}
+
+.caption{
+  font-size:14px;
+  margin-top:4px;
+}
+
+.comments{
+  margin-top:10px;
+  font-size:14px;
+}
+
+.comment{
+  margin-top:4px;
+}
+
+.comment b{
+  margin-left:4px;
+}
+
+.comment-box{
+  display:flex;
+  gap:6px;
+  margin-top:10px;
+}
+
+.comment-box input{
+  flex:1;
+  padding:8px 10px;
+  border-radius:10px;
+  border:none;
+  background:#1c1c1c;
+  color:#fff;
+}
+
+.comment-box button{
+  padding:8px 14px;
+  border-radius:10px;
+  border:none;
+  background:var(--accent);
+  color:#fff;
 }
 
 .back-btn{
@@ -76,8 +134,11 @@ async function loadPost(){
       <div class="post-media">
         ${
           post.type === "video"
-          ? `<video src="${API_BASE}/media_proxy?file_id=${post.video_id}"
-                   controls
+          ? `<video id="postVideo"
+                   src="${API_BASE}/media_proxy?file_id=${post.video_id}"
+                   muted
+                   autoplay
+                   loop
                    playsinline></video>`
           : `<img src="${API_BASE}/media_proxy?file_id=${post.photo}">`
         }
@@ -89,13 +150,101 @@ async function loadPost(){
       </div>
 
       <div class="post-actions">
-        ❤️ ${post.likes} لایک
-        <div style="margin-top:6px">${post.caption || ""}</div>
+        <div class="action-row">
+          <div class="action-left">
+            <span onclick="toggleLike(${post.post_id})">❤️</span>
+            <span>💬</span>
+            <span>📤</span>
+          </div>
+          <div class="action-right">
+            <span onclick="toggleSave(${post.post_id})">💾</span>
+          </div>
+        </div>
+
+        <div class="likes-count" id="likeCount">
+          ${post.likes} پسند
+        </div>
+
+        <div class="caption">
+          ${post.caption || ""}
+        </div>
+
+        <div class="comments" id="comments">
+          ${
+            post.comments.map(c=>`
+              <div class="comment">
+                <b>${c.username || c.user_id}</b> ${c.text}
+              </div>
+            `).join("")
+          }
+        </div>
+
+        <div class="comment-box">
+          <input id="commentInput" placeholder="افزودن نظر…">
+          <button onclick="sendComment(${post.post_id})">ارسال</button>
+        </div>
       </div>
     `;
+
+    // tap روی ویدیو = صدا دار
+    const vid = document.getElementById("postVideo");
+    if(vid){
+      vid.onclick = ()=>{
+        vid.muted = !vid.muted;
+      };
+    }
+
   }catch(e){
     root.innerHTML = `<p class="center-msg">خطا در بارگذاری پست</p>`;
   }
+}
+
+/* ===== Actions ===== */
+
+async function toggleLike(postId){
+  const me = requireAuth();
+  const res = await fetch(`${API_BASE}/like`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      user_id: me.id,
+      post_id: postId
+    })
+  });
+
+  if(res.ok) loadPost();
+}
+
+async function toggleSave(postId){
+  const me = requireAuth();
+  await fetch(`${API_BASE}/save`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      user_id: me.id,
+      post_id: postId
+    })
+  });
+}
+
+async function sendComment(postId){
+  const me = requireAuth();
+  const input = document.getElementById("commentInput");
+  const text = input.value.trim();
+  if(!text) return;
+
+  await fetch(`${API_BASE}/comment`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      user_id: me.id,
+      post_id: postId,
+      text
+    })
+  });
+
+  input.value = "";
+  loadPost();
 }
 
 loadPost();
