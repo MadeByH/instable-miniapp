@@ -136,9 +136,9 @@ body {
 }
 
 /* Comment Box (Fixed Bottom) */
+@media (max-height: 600px) {
 .comment-box-fixed-bottom {
-    position: fixed;
-    bottom: 0;
+    bottom: env(safe-area-inset-bottom);
     left: 0;
     right: 0;
     max-width: 520px;
@@ -151,7 +151,7 @@ body {
     gap: 8px;
     z-index: 60;
 }
-
+}
 .comment-box-fixed-bottom .avatar-sm { flex-shrink: 0; }
 
 .comment-box-fixed-bottom input{
