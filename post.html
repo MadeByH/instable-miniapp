@@ -318,8 +318,8 @@ async function loadPost(fullLoad = false){
         postData = post; // ذخیره داده‌ها برای استفاده در توابع دیگر
         
         // برای نمایش وضعیت اولیه لایک و ذخیره، فرض می‌کنیم از وضعیت دریافتی استفاده می‌کنیم
-        const Liked = post.is_liked;
-        const Saved = post.is_saved;
+        liked = post.is_liked;
+        saved = post.is_saved;
         
         // در حالت صفحه کامنت‌ها، وضعیت را برای دکمه ارسال تنظیم می‌کنیم (به طور پیش‌فرض غیرفعال است مگر کاربر تایپ کند)
         if(fullLoad) {
@@ -350,12 +350,16 @@ async function loadPost(fullLoad = false){
               <div class="post-actions">
                 <div class="action-row">
                   <div class="action-left">
-                    <i class="${getActionIcon(isLiked, 'like')}" onclick="toggleAction('like', ${post.post_id})"></i>
+                    <i id="likeIcon"
+   class="${getActionIcon(liked, 'like')}"
+   onclick="toggleLike()"></i>
                     <i class="far fa-comment" onclick="openCommentsPage()"></i> 
                     <i class="far fa-paper-plane"></i>
                   </div>
                   <div class="action-right">
-                    <i class="${getActionIcon(isSaved, 'save')}" onclick="toggleAction('save', ${post.post_id})"></i>
+                    <i id="saveIcon"
+   class="${getActionIcon(saved, 'save')}"
+   onclick="toggleSave()"></i>
                   </div>
                 </div>
 
@@ -406,12 +410,16 @@ async function loadPost(fullLoad = false){
                     <div class="post-actions" style="padding-top: 0;">
                         <div class="action-row">
                           <div class="action-left">
-                            <i class="${getActionIcon(isLiked, 'like')}" onclick="toggleAction('like', ${post.post_id})"></i>
+                            <i id="likeIcon"
+   class="${getActionIcon(liked, 'like')}"
+   onclick="toggleLike()"></i>
                             <i class="far fa-comment" onclick="focusCommentInput()"></i> 
                             <i class="far fa-paper-plane"></i>
                           </div>
                           <div class="action-right">
-                            <i class="${getActionIcon(isSaved, 'save')}" onclick="toggleAction('save', ${post.post_id})"></i>
+                            <i id="saveIcon"
+   class="${getActionIcon(saved, 'save')}"
+   onclick="toggleSave()"></i>
                           </div>
                         </div>
                         <div class="likes-count">${post.likes} پسند</div>
@@ -451,42 +459,28 @@ async function loadPost(fullLoad = false){
     }
 }
 
-async function toggleAction(type, postId){
+async function toggleLike(){
   const me = requireAuth();
-  let isNowActive = false;
-  
-  if (type === 'like') {
-    const likeIcon = document.querySelector(`i.${getActionIcon(false, 'like')}, i.${getActionIcon(true, 'like')}`);
-    const isCurrentlyLiked = likeIcon.classList.contains('fas');
-    isNowActive = !isCurrentlyLiked;
-    likeIcon.className = getActionIcon(isNowActive, 'like');
-    
-    // آپدیت تعداد لایک (فقط در نمای کوتاه)
-    if(!isCommentsPage && postData) {
-        const likeCountEl = document.getElementById("likeCount");
-        const currentLikes = parseInt(likeCountEl.innerText.split(' ')[0]);
-        likeCountEl.innerText = `${isNowActive ? currentLikes + 1 : currentLikes - 1} پسند`;
+  liked = !liked;
+
+  const icon = document.getElementById("likeIcon");
+  icon.className = getActionIcon(liked, "like");
+
+  const countEl = document.querySelector(".likes-count");
+  let count = parseInt(countEl.innerText);
+  countEl.innerText = liked
+    ? `${count + 1} پسند`
+    : `${count - 1} پسند`;
+
+  fetch(`${API_BASE}/like`,{
+    method:"POST",
+    headers:{ "Content-Type":"application/json" },
+    body: JSON.stringify({
+      user_id: me.id,
+      post_id: currentPostId
+    })
+  });
     }
-    
-    await fetch(`${API_BASE}/like`,{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ user_id: me.id, post_id: postId, state: isNowActive })
-    });
-    
-  } else if (type === 'save') {
-    const saveIcon = document.querySelector(`i.${getActionIcon(false, 'save')}, i.${getActionIcon(true, 'save')}`);
-    const isCurrentlySaved = saveIcon.classList.contains('fas');
-    isNowActive = !isCurrentlySaved;
-    saveIcon.className = getActionIcon(isNowActive, 'save');
-    
-    await fetch(`${API_BASE}/save`,{
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body: JSON.stringify({ user_id: me.id, post_id: postId, state: isNowActive })
-    });
-  }
-}
 
 async function toggleSave(){
   const me = requireAuth();
