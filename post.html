@@ -334,6 +334,15 @@ async function loadPost(fullLoad = false){
             pageTitle.innerText = 'پست';
             
             root.innerHTML = `
+              <div class="comments-page-header">
+                <span onclick="handleBack()">
+                  <i class="fas fa-arrow-left"></i>
+                </span>
+                <h2>دیدگاه‌ها</h2>
+                <span style="visibility:hidden;">
+                  <i class="fas fa-arrow-left"></i>
+                </span>
+              </div>
               <div class="post-media">
                 ${
                   post.type === "video"
