@@ -25,25 +25,29 @@
   gap:8px;
 }
 
-.search-wrap input{
-  flex:1;
-  min-width:0;              /* 🔴 خیلی مهم */
-  height:40px;
-  padding:0 14px;
-
-  border-radius:12px;
-  border:none;
-  background:#1b2330;
-  color:#fff;
-  font-size:14px;
-
-  outline:none;
-
+.search-wrap input {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: none;
+  background: #1b2330;
+  color: #fff;
+  font-size: 14px;
+  caret-color: #ff4d67;
+  box-sizing: border-box;
   direction: rtl;
   text-align: right;
+  outline: none;
+}
 
-  line-height: normal;      /* 🔴 line-height رو حذف کن */
-  box-sizing: border-box;   /* 🔴 */
+.search-wrap input::placeholder {
+  color: #9eb0c8;
+}
+
+.search-wrap input:focus {
+  background: #2a3445;
 }
 
 #cancelSearch{
