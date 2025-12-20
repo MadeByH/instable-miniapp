@@ -199,16 +199,20 @@ function onSearchInput(){
   clearTimeout(searchTimeout);
 
   if(!q){
+    isSearching = false;
     loadExplore(true);
     return;
   }
 
+  isSearching = true;
   searchTimeout = setTimeout(()=>searchExplore(q), 400);
-}
+  }
 
 async function searchExplore(q){
   loading.style.display = "block";
   grid.innerHTML = "";
+  page = 1;          // 🔴 ریست
+  isSearching = true;
 
   try{
     const res = await fetch(`${API_BASE}/search?q=${encodeURIComponent(q)}`);
@@ -217,18 +221,21 @@ async function searchExplore(q){
   }catch(e){}
 
   loading.style.display = "none";
-}
+  }
 
 function cancelSearch(){
   searchInput.value = "";
   cancelBtn.style.display = "none";
+  isSearching = false;
   loadExplore(true);
-}
+  }
 
 /* =====================
    Infinite Scroll
 ===================== */
 window.addEventListener("scroll", ()=>{
+  if(isSearching) return;   // 🔴 خیلی مهم
+
   if(window.innerHeight + window.scrollY >= document.body.offsetHeight - 300){
     loadExplore(false);
   }
