@@ -13,10 +13,15 @@
     --accent: #0095f6;
 }
 
+body {
+    background: #000000;
+    color: #fafafa;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 .post-page{
   max-width:520px;
   margin:0 auto;
-  /* padding-bottom برای کامنت باکس فیکس شده حذف شد چون در صفحه کامنت‌ها دوباره اضافه می‌شود */
 }
 
 .post-media img, .post-media video{
@@ -25,8 +30,8 @@
   background:#000;
 }
 
-/* Header (Top Bar) */
-.topbar{
+/* --- Header Bars --- */
+.topbar, .comments-page-header {
   display:flex;
   align-items:center;
   gap:10px;
@@ -36,9 +41,14 @@
   position: sticky;
   top: 0;
   background: #000000;
-  z-index: 50; /* بسیار بالا برای اطمینان */
+  z-index: 50;
 }
 
+.topbar h1 {
+    flex:1; text-align:center; font-size:18px; margin: 0;
+}
+
+/* Post Header (User Info) */
 .post-header{
   display:flex;
   align-items:center;
@@ -47,11 +57,11 @@
   font-size:14px;
 }
 
-.post-header .username{
+.post-header .username-display{
   font-weight:600;
 }
 
-/* Actions Row (در حالت مشاهده پست) */
+/* Actions Row */
 .post-actions{
   padding:8px 10px;
 }
@@ -83,16 +93,18 @@
 }
 .caption span { font-weight: 600; margin-left: 4px; }
 
+.timeago {
+    font-size: 10px;
+    color: #8e8e8e;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+
 /* === استایل صفحه کامنت‌ها === */
 .comments-page-header {
-    display: flex;
-    align-items: center;
-    padding: 10px;
-    border-bottom: 1px solid #262626;
-    position: sticky;
-    top: 45px; /* زیر topbar */
-    background: #000000;
-    z-index: 40;
+    top: 0;
+    z-index: 50;
 }
 .comments-page-header h2 {
     flex: 1;
@@ -103,8 +115,7 @@
 
 .comment-list {
     padding: 10px;
-    /* برای ایجاد فضای خالی بین کامنت‌ها */
-    padding-bottom: 100px; /* فضای کافی برای کامنت باکس در پایین */
+    padding-bottom: 120px; /* فضای کافی برای کامنت باکس و محتوای فیکس شده زیر آن */
 }
 
 .comment-item{
@@ -112,13 +123,19 @@
   font-size:14px;
   display: flex;
 }
-
+.comment-item .avatar-sm { margin-left: 10px; flex-shrink: 0; }
+.comment-item .content { flex-grow: 1; }
 .comment-item .username-comment {
   font-weight: 600;
   margin-left: 4px;
 }
 
-/* Comment Box (برای صفحه کامنت‌ها، فیکس در پایین) */
+/* Media & Header in Comments View (Top Section) */
+.comments-view-top-section {
+    border-bottom: 1px solid #262626;
+}
+
+/* Comment Box (Fixed Bottom) */
 .comment-box-fixed-bottom {
     position: fixed;
     bottom: 0;
@@ -135,6 +152,8 @@
     z-index: 60;
 }
 
+.comment-box-fixed-bottom .avatar-sm { flex-shrink: 0; }
+
 .comment-box-fixed-bottom input{
   flex:1;
   padding: 8px 12px;
@@ -143,6 +162,7 @@
   background: #1c1c1c;
   color: #fff;
   font-size: 14px;
+  outline: none;
 }
 
 .comment-box-fixed-bottom button{
@@ -155,7 +175,7 @@
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  display: none;
+  display: none; /* مخفی است تا زمانی که متن وارد شود */
 }
 
 .comment-box-fixed-bottom button:disabled {
@@ -170,8 +190,8 @@
 <body>
 
 <header class="topbar" id="headerBar">
-  <span class="back-btn" onclick="history.back()"><i class="fas fa-arrow-left"></i></span>
-  <h1 id="pageTitle" style="flex:1; text-align:center; font-size:18px;">پست</h1>
+  <span class="back-btn" onclick="handleBack()"><i class="fas fa-arrow-left"></i></span>
+  <h1 id="pageTitle">پست</h1>
   <span style="visibility:hidden;"><i class="fas fa-arrow-left"></i></span>
 </header>
 
@@ -179,8 +199,9 @@
   <div class="loading">در حال بارگذاری…</div>
 </main>
 
-<!-- کامنت باکس که در پایین صفحه فیکس خواهد شد -->
-<div id="commentBoxFixed" class="comment-box-fixed-bottom" style="display: none;">
+<!-- کامنت باکس فیکس شده در پایین -->
+<div id="commentBoxFixed" class="comment-box-fixed-bottom">
+    <div class="avatar-sm"></div>
     <input id="commentInput" placeholder="افزودن نظر…" oninput="handleCommentInput(this)">
     <button id="sendButton" onclick="sendComment(currentPostId)" disabled>ارسال</button>
 </div>
@@ -202,51 +223,88 @@ const commentInput = document.getElementById("commentInput");
 const sendButton = document.getElementById("sendButton");
 
 let currentPostId = null;
-let isCommentsPage = false; // وضعیت فعلی صفحه
+let isCommentsPage = false; 
+let postData = null; // برای نگهداری داده‌های پست برای دسترسی سریع
+
+// --- Utility Functions ---
+
+function timeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " سال پیش";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " ماه پیش";
+    interval = seconds / 604800;
+    if (interval > 1) return Math.floor(interval) + " هفته پیش";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " روز پیش";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " ساعت پیش";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " دقیقه پیش";
+    return "همین الان";
+}
+
+function getActionIcon(state, type) {
+    // type: 'like' or 'save'
+    // state: true (filled) or false (outline)
+    if (type === 'like') {
+        return state ? 'fas fa-heart' : 'far fa-heart';
+    }
+    if (type === 'save') {
+        return state ? 'fas fa-bookmark' : 'far fa-bookmark';
+    }
+    return '';
+}
+
+// --- Core Handlers ---
 
 function updateSendButtonState() {
     const text = commentInput.value.trim();
     if (text) {
         sendButton.disabled = false;
         sendButton.style.display = 'block';
-        const likeIcon = document.querySelector('.action-left i.fa-heart');
-        if(likeIcon) likeIcon.classList.add('fas'); // شبیه سازی لایک شده
     } else {
         sendButton.disabled = true;
         sendButton.style.display = 'none';
-        const likeIcon = document.querySelector('.action-left i.fa-heart');
-        if(likeIcon) likeIcon.classList.remove('fas'); // شبیه سازی لایک نشده
     }
+}
+
+function handleCommentInput(inputElement) {
+    updateSendButtonState();
 }
 
 function focusCommentInput() {
     if (!isCommentsPage) {
-        // اگر در صفحه اصلی پست بودیم، به صفحه کامنت‌ها برو
         openCommentsPage();
     }
     commentInput.focus();
 }
 
-async function openCommentsPage(){
-    if (isCommentsPage || !currentPostId) return;
-    
-    isCommentsPage = true;
-    
-    // 1. غیرفعال کردن نوار بالایی پست اصلی
-    headerBar.style.display = 'none';
-    
-    // 2. نمایش نوار بالایی صفحه کامنت‌ها
-    pageTitle.innerText = 'دیدگاه‌ها';
-    
-    // 3. بارگذاری کامل محتوای صفحه کامنت‌ها
-    await loadPost(true); // بارگذاری مجدد با پارامتر برای نمایش تمام کامنت‌ها
-    
-    // 4. نمایش باکس کامنت فیکس شده در پایین
-    fixedCommentBox.style.display = 'flex';
-    
-    // 5. اطمینان از اینکه پدینگ کافی برای محتوا وجود دارد
-    root.classList.add('post-page-with-comments'); // می‌توانید کلاس padding را در CSS اضافه کنید
+function handleBack() {
+    if (isCommentsPage) {
+        history.back();
+    } else {
+        // رفتار پیش‌فرض برای برگشت به صفحه قبلی در اپلیکیشن
+        if (window.Bale?.WebApp) {
+            Bale.WebApp.close();
+        } else {
+            window.history.back();
+        }
+    }
 }
+
+window.addEventListener("popstate", () => {
+    if (isCommentsPage) {
+        isCommentsPage = false;
+        loadPost(false); 
+    }
+});
+
+// --- API & Rendering ---
 
 async function loadPost(fullLoad = false){
     try{
@@ -255,8 +313,18 @@ async function loadPost(fullLoad = false){
         currentPostId = id;
 
         const post = await fetch(`${API_BASE}/get_post/${id}`).then(r=>r.json());
+        postData = post; // ذخیره داده‌ها برای استفاده در توابع دیگر
         
-        // این قسمت بر اساس وضعیت صفحه (فید یا صفحه کامنت) محتوا را رندر می‌کند
+        // برای نمایش وضعیت اولیه لایک و ذخیره، فرض می‌کنیم از وضعیت دریافتی استفاده می‌کنیم
+        const isLiked = post.is_liked || false;
+        const isSaved = post.is_saved || false;
+        
+        // در حالت صفحه کامنت‌ها، وضعیت را برای دکمه ارسال تنظیم می‌کنیم (به طور پیش‌فرض غیرفعال است مگر کاربر تایپ کند)
+        if(fullLoad) {
+             updateSendButtonState(); 
+        }
+
+
         if (!fullLoad) {
             // حالت اولیه (مشاهده پست در فید)
             headerBar.style.display = 'flex';
@@ -274,27 +342,29 @@ async function loadPost(fullLoad = false){
 
               <div class="post-header">
                 <div class="avatar-sm"></div>
-                <div class="username">${post.user_id}</div>
+                <div class="username-display">${post.display_name || post.user_id}</div> <!-- استفاده از نام نمایشی -->
               </div>
 
               <div class="post-actions">
                 <div class="action-row">
                   <div class="action-left">
-                    <i class="far fa-heart" onclick="toggleLike(${post.post_id})"></i>
-                    <i class="far fa-comment" onclick="openCommentsPage()"></i> <!-- کلیک روی این آیکون، صفحه کامنت‌ها را باز می‌کند -->
+                    <i class="${getActionIcon(isLiked, 'like')}" onclick="toggleAction('like', ${post.post_id})"></i>
+                    <i class="far fa-comment" onclick="openCommentsPage()"></i> 
                     <i class="far fa-paper-plane"></i>
                   </div>
                   <div class="action-right">
-                    <i class="far fa-bookmark" onclick="toggleSave(${post.post_id})"></i>
+                    <i class="${getActionIcon(isSaved, 'save')}" onclick="toggleAction('save', ${post.post_id})"></i>
                   </div>
                 </div>
 
-                <div class="likes-count" id="likeCount">
+                <div class="likes-count">
                   ${post.likes} پسند
                 </div>
 
+                <div class="timeago">${timeAgo(post.created_at)}</div> <!-- زمان پست -->
+
                 <div class="caption">
-                  <b>${post.user_id}</b> 
+                  <b>${post.display_name || post.user_id}</b> 
                   ${post.caption ? post.caption.substring(0, 100) + (post.caption.length > 100 ? '...' : '') : ''}
                 </div>
                 
@@ -310,51 +380,63 @@ async function loadPost(fullLoad = false){
 
         } else {
             // حالت صفحه کامنت‌ها (fullLoad = true)
+            isCommentsPage = true;
+            headerBar.style.display = 'none'; // هدر اصلی پنهان، هدر صفحه کامنت‌ها نمایش داده می‌شود
+            fixedCommentBox.style.display = 'flex';
+            pageTitle.innerText = 'دیدگاه‌ها';
             
-            root.innerHTML = `
-                <div class="comment-list">
-                  ${
-                    post.comments.map(c=>`
-                      <div class="comment-item">
-                        <div class="avatar-sm" style="margin-left: 10px;"></div>
-                        <div>
-                            <span class="username-comment">${c.username || c.user_id}</span> ${c.text}
-                            <div style="font-size: 12px; color: #8e8e8e; margin-top: 4px;">پاسخ دادن • ${new Date().toLocaleDateString('fa-IR')}</div>
+            // --- ساختار بالای صفحه کامنت‌ها (مدیا و هدر پست) ---
+            const commentsHeaderSection = `
+                <div class="comments-view-top-section">
+                    <div class="post-media">
+                      ${
+                        post.type === "video"
+                        ? `<video src="${API_BASE}/media_proxy?file_id=${post.video_id}" muted loop playsinline style="max-height: 300px; object-fit: contain;"></video>`
+                        : `<img src="${API_BASE}/media_proxy?file_id=${post.photo}" style="max-height: 300px; object-fit: contain;">`
+                      }
+                    </div>
+
+                    <div class="post-header">
+                      <div class="avatar-sm"></div>
+                      <div class="username-display">${post.display_name || post.user_id}</div>
+                    </div>
+
+                    <div class="post-actions" style="padding-top: 0;">
+                        <div class="action-row">
+                          <div class="action-left">
+                            <i class="${getActionIcon(isLiked, 'like')}" onclick="toggleAction('like', ${post.post_id})"></i>
+                            <i class="far fa-comment" onclick="focusCommentInput()"></i> 
+                            <i class="far fa-paper-plane"></i>
+                          </div>
+                          <div class="action-right">
+                            <i class="${getActionIcon(isSaved, 'save')}" onclick="toggleAction('save', ${post.post_id})"></i>
+                          </div>
                         </div>
-                      </div>
-                    `).join("")
-                  }
-                </div>
-            `;
-            
-            // نمایش مدیا و هدر پست در بالای صفحه کامنت‌ها (شبیه اینستاگرام)
-            const mediaAndHeader = `
-                <div class="post-media" style="border-bottom: 1px solid #262626;">
-                  ${
-                    post.type === "video"
-                    ? `<video src="${API_BASE}/media_proxy?file_id=${post.video_id}" muted loop playsinline style="max-height: 300px; object-fit: contain;"></video>`
-                    : `<img src="${API_BASE}/media_proxy?file_id=${post.photo}" style="max-height: 300px; object-fit: contain;">`
-                  }
-                </div>
-
-                <div class="post-header" style="border-bottom: 1px solid #262626;">
-                  <div class="avatar-sm"></div>
-                  <div class="username">${post.user_id}</div>
-                </div>
-
-                <div class="post-actions" style="padding-top: 0;">
-                    <div class="likes-count">${post.likes} پسند</div>
-                    <div class="caption"><b>${post.user_id}</b> ${post.caption || ""}</div>
-                    <div style="border-top: 1px solid #262626; margin-top: 10px; padding-top: 6px; font-size: 12px; color: #9e9e9e;">
-                        همه ${post.comments.length} دیدگاه
+                        <div class="likes-count">${post.likes} پسند</div>
+                        <div class="timeago">${timeAgo(post.created_at)}</div>
+                        <div class="caption"><b>${post.display_name || post.user_id}</b> ${post.caption || ""}</div>
                     </div>
                 </div>
             `;
             
-            // محتوای اصلی صفحه کامنت‌ها را در بالای کامنت لیست قرار می‌دهیم
-            root.innerHTML = mediaAndHeader + root.innerHTML;
+            const commentItemsHtml = post.comments.map(c => {
+                const commentTime = timeAgo(c.created_at || new Date().toISOString());
+                return `
+                  <div class="comment-item">
+                    <div class="avatar-sm"></div>
+                    <div class="content">
+                        <span class="username-comment">${c.display_name || c.user_id}</span> ${c.text}
+                        <div style="font-size: 12px; color: #8e8e8e; margin-top: 4px;">
+                            <span style="font-weight: bold; margin-left: 6px; cursor: pointer;">پاسخ دادن</span> • ${commentTime}
+                        </div>
+                    </div>
+                  </div>
+                `;
+            }).join("");
             
-            // اطمینان از فوکوس در پایین صفحه
+            root.innerHTML = commentsHeaderSection + `<div class="comment-list">${commentItemsHtml}</div>`;
+            
+            // اسکرول به پایین برای نمایش باکس کامنت
             setTimeout(() => {
                 window.scrollTo(0, document.body.scrollHeight);
             }, 50);
@@ -367,25 +449,41 @@ async function loadPost(fullLoad = false){
     }
 }
 
-
-async function toggleLike(postId){
+async function toggleAction(type, postId){
   const me = requireAuth();
-  await fetch(`${API_BASE}/like`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ user_id: me.id, post_id: postId })
-  });
-  if (!isCommentsPage) loadPost(false); // فقط در صفحه اصلی رفرش کن
-}
-
-async function toggleSave(postId){
-  const me = requireAuth();
-  await fetch(`${API_BASE}/save`,{
-    method:"POST",
-    headers:{ "Content-Type":"application/json" },
-    body: JSON.stringify({ user_id: me.id, post_id: postId })
-  });
-  if (!isCommentsPage) loadPost(false);
+  let isNowActive = false;
+  
+  if (type === 'like') {
+    const likeIcon = document.querySelector(`i.${getActionIcon(false, 'like')}, i.${getActionIcon(true, 'like')}`);
+    const isCurrentlyLiked = likeIcon.classList.contains('fas');
+    isNowActive = !isCurrentlyLiked;
+    likeIcon.className = getActionIcon(isNowActive, 'like');
+    
+    // آپدیت تعداد لایک (فقط در نمای کوتاه)
+    if(!isCommentsPage && postData) {
+        const likeCountEl = document.getElementById("likeCount");
+        const currentLikes = parseInt(likeCountEl.innerText.split(' ')[0]);
+        likeCountEl.innerText = `${isNowActive ? currentLikes + 1 : currentLikes - 1} پسند`;
+    }
+    
+    await fetch(`${API_BASE}/like`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ user_id: me.id, post_id: postId, state: isNowActive })
+    });
+    
+  } else if (type === 'save') {
+    const saveIcon = document.querySelector(`i.${getActionIcon(false, 'save')}, i.${getActionIcon(true, 'save')}`);
+    const isCurrentlySaved = saveIcon.classList.contains('fas');
+    isNowActive = !isCurrentlySaved;
+    saveIcon.className = getActionIcon(isNowActive, 'save');
+    
+    await fetch(`${API_BASE}/save`,{
+        method:"POST",
+        headers:{ "Content-Type":"application/json" },
+        body: JSON.stringify({ user_id: me.id, post_id: postId, state: isNowActive })
+    });
+  }
 }
 
 async function sendComment(postId){
@@ -402,32 +500,32 @@ async function sendComment(postId){
   commentInput.value = "";
   updateSendButtonState();
   
-  // اگر در صفحه کامنت‌ها هستیم، صفحه را مجدداً لود کنیم تا کامنت جدید نمایش داده شود
+  // رفرش صفحه کامنت‌ها برای نمایش کامنت جدید
   if(isCommentsPage) {
       loadPost(true);
   } else {
-      // اگر در صفحه اصلی بودیم، فقط آیکون لایک را بر اساس حالت دکمه آپدیت کنیم (تعداد کامنت‌ها در لیست محدود فعلی به‌روز نمی‌شود)
-      // برای هماهنگی بهتر، در این حالت هم رفرش می‌کنیم.
       loadPost(false);
   }
 }
 
-// مدیریت بازگشت (Back Button)
-window.addEventListener("popstate", () => {
-    if (isCommentsPage) {
-        isCommentsPage = false;
-        loadPost(false); // بازگشت به نمای پست اصلی
-    } else {
-        // اگر در نمای اصلی بودیم و کاربر به عقب برگردد، همان رفتار اصلی مرورگر را انجام دهد
-        history.back();
-    }
-});
+async function openCommentsPage(){
+    if (isCommentsPage || !currentPostId) return;
+    
+    isCommentsPage = true;
+    
+    // تغییر وضعیت مرورگر برای مدیریت دکمه بازگشت
+    history.pushState({}, '', `?id=${currentPostId}`);
 
-loadPost(false); // بارگذاری اولیه در حالت مشاهده پست
+    // بارگذاری مجدد برای نمایش نمای کامل کامنت‌ها
+    await loadPost(true); 
+}
+
 
 fetch("nav.html")
   .then(r=>r.text())
   .then(html=>nav.innerHTML=html);
+
+loadPost(false); // بارگذاری اولیه در حالت مشاهده پست
 </script>
 
 </body>
