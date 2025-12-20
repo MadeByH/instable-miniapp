@@ -4,38 +4,106 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>پست</title>
+
 <link rel="stylesheet" href="style.css">
+
+<style>
+.post-page{
+  max-width:520px;
+  margin:0 auto;
+}
+
+.post-media img,
+.post-media video{
+  width:100%;
+  display:block;
+  background:#000;
+}
+
+.post-header{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  font-size:14px;
+}
+
+.post-header .username{
+  font-weight:600;
+}
+
+.post-actions{
+  padding:10px;
+  font-size:14px;
+}
+
+.back-btn{
+  cursor:pointer;
+}
+</style>
 </head>
+
 <body>
-  <header class="topbar"><a href="index.html">← بازگشت</a><h1>پست</h1></header>
-  <main id="post-root">
-    <div id="post-container"></div>
-  </main>
-<script src="app.js"></script>
-<script>
-  window.API_BASE = location.hostname === "127.0.0.1" || location.hostname === "localhost"
-    ? "http://127.0.0.1:8000/api"
-    : "https://insta-api-avn2.onrender.com/api";
-  window.renderPostFromQuery();
-</script>
+
+<header class="topbar">
+  <span class="back-btn" onclick="history.back()">◀</span>
+  <h1>پست</h1>
+</header>
+
+<main class="post-page" id="postRoot">
+  <div class="loading">در حال بارگذاری…</div>
+</main>
+
 <div id="nav"></div>
+
+<script src="auth.js"></script>
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+
 <script>
+const API_BASE = "https://insta-api-avn2.onrender.com/api";
+if (window.Bale?.WebApp) Bale.WebApp.ready();
+
+const root = document.getElementById("postRoot");
+
+async function loadPost(){
+  try{
+    const me = requireAuth();
+    const id = new URLSearchParams(location.search).get("id");
+
+    const post = await fetch(`${API_BASE}/get_post/${id}`).then(r=>r.json());
+
+    root.innerHTML = `
+      <div class="post-media">
+        ${
+          post.type === "video"
+          ? `<video src="${API_BASE}/media_proxy?file_id=${post.video_id}"
+                   controls
+                   playsinline></video>`
+          : `<img src="${API_BASE}/media_proxy?file_id=${post.photo}">`
+        }
+      </div>
+
+      <div class="post-header">
+        <div class="avatar-sm"></div>
+        <div class="username">${post.user_id}</div>
+      </div>
+
+      <div class="post-actions">
+        ❤️ ${post.likes} لایک
+        <div style="margin-top:6px">${post.caption || ""}</div>
+      </div>
+    `;
+  }catch(e){
+    root.innerHTML = `<p class="center-msg">خطا در بارگذاری پست</p>`;
+  }
+}
+
+loadPost();
+
 fetch("nav.html")
-  .then(r => r.text())
-  .then(html => {
-    const navContainer = document.getElementById("nav");
-    navContainer.innerHTML = html;
-
-    let uid;
-    try {
-      uid = getUserId();
-    } catch {
-      alert("این برنامه فقط داخل بله اجرا می‌شود");
-      }
-
-    const profileLink = document.getElementById("profile-link");
-    profileLink.href = `profile.html?user_id=${uid}`;
-  });
+  .then(r=>r.text())
+  .then(html=>nav.innerHTML=html);
 </script>
+
 </body>
 </html>
