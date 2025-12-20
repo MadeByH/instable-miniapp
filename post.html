@@ -306,6 +306,44 @@ window.addEventListener("popstate", () => {
     }
 });
 
+// --- توابع کمکی جدید برای Double Tap ---
+
+let lastTap = 0;
+function setupDoubleTap(postId) {
+    const mediaContainer = document.querySelector(".post-media");
+    if (!mediaContainer) return;
+
+    mediaContainer.addEventListener("click", function(e) {
+        // این بررسی اطمینان می‌دهد که فقط کلیک روی بخش مدیا حساب می‌شود
+        if (!e.target.closest(".post-media")) return;
+        
+        const now = Date.now();
+        const elapsed = now - lastTap;
+
+        if (elapsed < 300) {
+            // Double Tap Detected
+            lastTap = 0; 
+            
+            // اینجا باید تابع اصلی شما (که قبلاً برای آیکون استفاده می‌شد) را فراخوانی کنیم
+            // با توجه به کد شما، فرض می‌کنیم تابع اصلی toggleAction('like', postId) است.
+            // اگر تابع شما صرفاً toggleLike() است، از آن استفاده کنید.
+            // من از toggleAction('like', postId) استفاده می‌کنم که بر اساس کد قبلی شما منطقی‌تر است.
+            const likeIcon = document.getElementById('likeIcon');
+            if(likeIcon && !likeIcon.classList.contains('fas')) {
+                toggleAction('like', postId); 
+            }
+
+        } else {
+            lastTap = now;
+            // اگر دابل تپ نبود، ویدیو را پخش/توقف کنید (در صورت وجود ویدیو)
+            const vid = document.getElementById("postVideo");
+            if(vid && e.target.tagName === 'VIDEO') {
+                vid.paused ? vid.play() : vid.pause();
+            }
+        }
+    });
+}
+
 // --- API & Rendering ---
 
 async function loadPost(fullLoad = false){
@@ -393,6 +431,10 @@ async function loadPost(fullLoad = false){
              const vid = document.getElementById("postVideo");
              if(vid) vid.onclick = ()=>{ vid.muted = !vid.muted; };
 
+             // *** فراخوانی برای فعال کردن دابل تپ ***
+             if(post.post_id) {
+                 setupDoubleTap(post.post_id);
+    }
         } else {
             // حالت صفحه کامنت‌ها (fullLoad = true)
             isCommentsPage = true;
