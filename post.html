@@ -143,53 +143,66 @@ body {
   right: 0;
 
   display: flex;
-  align-items: center; /* ❗ مهم */
-
+  align-items: center;
+  justify-content: space-between;
   gap: 8px;
-  padding: 8px 10px;
 
+  padding: 8px 10px;
   background: #000;
   border-top: 1px solid #222;
   z-index: 1000;
+  box-sizing: border-box;
 }
 
+/* Writing area */
 .comment-box-fixed textarea {
   flex: 1;
-  box-sizing: border-box;
-
-  min-height: 36px;
+  min-height: 38px;
   max-height: 120px;
 
+  box-sizing: border-box;
   padding: 8px 12px;
   border-radius: 18px;
+  border: 1px solid #333;
+  background-color: #111;
 
   resize: none;
   overflow-y: auto;
 
+  color: #fff;
   font-size: 14px;
   line-height: 20px;
+  font-family: inherit;
 
   direction: rtl;
   text-align: right;
-    }
+  writing-mode: horizontal-tb !important;
+  display: inline-block !important;
+}
 
+/* Send button */
 .comment-box-fixed button {
   flex-shrink: 0;
-  height: 36px;
+  height: 38px;
+  padding: 0 14px;
 
-  background: none;
   border: none;
-
-  color: var(--accent);
+  border-radius: 14px;
+  background: none;
+  color: var(--accent, #0095f6);
   font-size: 14px;
   font-weight: 600;
 
   cursor: pointer;
+  transition: opacity 0.2s ease;
 }
 
+.comment-box-fixed button:hover {
+  opacity: 0.8;
+}
 .comment-box-fixed button:disabled {
   opacity: 0.4;
-    }
+}
 
 .back-btn{ cursor:pointer; }
 </style>
@@ -208,21 +221,9 @@ body {
 </main>
 
 <!-- کامنت باکس فیکس شده در پایین -->
-<div id="commentBoxFixed" class="comment-box-fixed">
-  <textarea
-    id="commentInput"
-    placeholder="افزودن دیدگاه…"
-    rows="1"
-    oninput="handleCommentInput(this)"
-  ></textarea>
-
-  <button
-    id="sendButton"
-    onclick="sendComment(currentPostId)"
-    disabled
-  >
-    ارسال
-  </button>
+<div class="comment-box-fixed">
+  <textarea id="commentInput" placeholder="افزودن دیدگاه..."></textarea>
+  <button id="sendComment" onclick="sendComment()">ارسال</button>
 </div>
 
 <div id="nav"></div>
