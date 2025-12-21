@@ -141,37 +141,54 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: #000;
+
   display: flex;
-  align-items: center; /* ❗ خیلی مهم */
+  align-items: flex-end; /* ❗ مهم */
+
   gap: 8px;
   padding: 8px 10px;
+
+  background: #000;
   border-top: 1px solid #222;
   z-index: 1000;
 }
 
 .comment-box-fixed textarea {
   flex: 1;
+  box-sizing: border-box;
+
   min-height: 36px;
   max-height: 120px;
+
   padding: 8px 12px;
   border-radius: 18px;
   border: none;
-  background: #1c1c1c;
-  color: #fff;
   outline: none;
+
   resize: none;
   overflow-y: auto;
+
+  background: #1c1c1c;
+  color: #fff;
+
   font-size: 14px;
+  line-height: 20px;
+
+  direction: rtl;
+  text-align: right;
 }
 
 .comment-box-fixed button {
-  flex-shrink: 0;           /* ❗ دکمه بزرگ نشه */
+  flex-shrink: 0;
+  height: 36px;
+
   background: none;
-  color: var(--accent);
   border: none;
+
+  color: var(--accent);
   font-size: 14px;
   font-weight: 600;
+
   cursor: pointer;
 }
 
@@ -287,7 +304,7 @@ function updateSendButtonState() {
 
 function handleCommentInput(el) {
   el.style.height = "36px";
-  el.style.height = el.scrollHeight + "px";
+  el.style.height = Math.min(el.scrollHeight, 120) + "px";
 
   const text = el.value.trim();
   sendButton.disabled = !text;
