@@ -121,6 +121,25 @@ button{
   font-size:15px;
   }
 
+.comment-input {
+  width: 100%;
+  min-height: 36px;
+  max-height: 120px;
+  padding: 8px 12px;
+  border: none;
+  outline: none;
+  resize: none;
+
+  font-size: 14px;
+  line-height: 20px;
+
+  direction: rtl;
+  text-align: right;
+  overflow-y: auto;
+
+  background: transparent;
+}
+
 .profile-box{
   max-width:720px;
   margin:18px auto;
