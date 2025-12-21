@@ -109,7 +109,9 @@ input, textarea{
   background:#1c1c1c;
   color:white;
 }
-textarea{resize:none;height:80px}
+textarea{
+  resize:none;
+  }
 button{
   margin-top:16px;
   width:100%;
