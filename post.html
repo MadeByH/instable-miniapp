@@ -136,45 +136,48 @@ body {
 }
 
 /* Comment Box (Fixed Bottom) */
-.comment-box-fixed-bottom {
+.comment-box-fixed {
   position: fixed;
-  bottom: env(safe-area-inset-bottom);
+  bottom: 0;
   left: 0;
   right: 0;
-  max-width: 520px;
-  margin: 0 auto;
-  padding: 8px 12px;
   background: #000;
-  border-top: 1px solid #262626;
   display: flex;
-  align-items: center;
+  align-items: center; /* ❗ خیلی مهم */
   gap: 8px;
-  z-index: 60;
-    }
-.comment-box-fixed-bottom .avatar-sm { flex-shrink: 0; }
+  padding: 8px 10px;
+  border-top: 1px solid #222;
+  z-index: 1000;
+}
 
-.comment-box-fixed-bottom input {
+.comment-box-fixed textarea {
   flex: 1;
   min-height: 36px;
-  padding: 8px 14px;
+  max-height: 120px;
+  padding: 8px 12px;
   border-radius: 18px;
-  border: 1px solid #3a3a3a;
+  border: none;
   background: #1c1c1c;
   color: #fff;
+  outline: none;
+  resize: none;
+  overflow-y: auto;
   font-size: 14px;
-    }
+}
 
-.comment-box-fixed-bottom button {
-  height: 36px;
-  padding: 0 10px;
+.comment-box-fixed button {
+  flex-shrink: 0;           /* ❗ دکمه بزرگ نشه */
+  background: none;
+  color: var(--accent);
+  border: none;
   font-size: 14px;
   font-weight: 600;
-    }
-
-.comment-box-fixed-bottom button:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
+  cursor: pointer;
 }
+
+.comment-box-fixed button:disabled {
+  opacity: 0.4;
+    }
 
 .back-btn{ cursor:pointer; }
 </style>
@@ -193,16 +196,21 @@ body {
 </main>
 
 <!-- کامنت باکس فیکس شده در پایین -->
-<div id="commentBoxFixed" class="comment-box-fixed-bottom">
-    <div class="avatar-sm">
-  ${
-    post.user.avatar
-      ? `<img src="${API_BASE}/media_proxy?file_id=${post.user.avatar}">`
-      : ""
-  }
-    </div>
-    <input id="commentInput" placeholder="افزودن نظر…" oninput="handleCommentInput(this)">
-    <button id="sendButton" onclick="sendComment(currentPostId)" disabled>ارسال</button>
+<div id="commentBoxFixed" class="comment-box-fixed">
+  <textarea
+    id="commentInput"
+    placeholder="افزودن دیدگاه…"
+    rows="1"
+    oninput="handleCommentInput(this)"
+  ></textarea>
+
+  <button
+    id="sendButton"
+    onclick="sendComment(currentPostId)"
+    disabled
+  >
+    ارسال
+  </button>
 </div>
 
 <div id="nav"></div>
@@ -277,9 +285,17 @@ function updateSendButtonState() {
     }
 }
 
-function handleCommentInput(inputElement) {
-    updateSendButtonState();
-}
+function handleCommentInput(el) {
+  el.style.height = "36px";
+  el.style.height = el.scrollHeight + "px";
+  updateSendButtonState();
+    }
+
+function updateSendButtonState() {
+  const text = commentInput.value.trim();
+  sendButton.disabled = !text;
+  sendButton.style.display = text ? "block" : "none";
+    }
 
 function focusCommentInput() {
     if (!isCommentsPage) {
@@ -287,6 +303,21 @@ function focusCommentInput() {
     }
     commentInput.focus();
 }
+
+async function deleteComment(commentId) {
+  const me = requireAuth();
+
+  await fetch(`${API_BASE}/delete_comment`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      comment_id: commentId,
+      user_id: me.id
+    })
+  });
+
+  loadPost(true);
+    }
 
 function handleBack() {
   if (isCommentsPage) {
@@ -518,7 +549,7 @@ async function loadPost(fullLoad = false){
             `;
             
             const commentItemsHtml = post.comments.map(c => {
-                const commentTime = timeAgo(c.created_at || new Date().toISOString());
+                const commentTime = timeAgo(c.timestamp);
                 return `
                   <div class="comment-item">
                     <div class="avatar-sm">
