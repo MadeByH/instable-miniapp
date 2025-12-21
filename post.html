@@ -194,7 +194,13 @@ body {
 
 <!-- کامنت باکس فیکس شده در پایین -->
 <div id="commentBoxFixed" class="comment-box-fixed-bottom">
-    <div class="avatar-sm"></div>
+    <div class="avatar-sm">
+  ${
+    post.user.avatar
+      ? `<img src="${API_BASE}/media_proxy?file_id=${post.user.avatar}">`
+      : ""
+  }
+    </div>
     <input id="commentInput" placeholder="افزودن نظر…" oninput="handleCommentInput(this)">
     <button id="sendButton" onclick="sendComment(currentPostId)" disabled>ارسال</button>
 </div>
@@ -381,8 +387,16 @@ async function loadPost(fullLoad = false){
               </div>
 
               <div class="post-header">
-                <div class="avatar-sm"></div>
-                <div class="username-display">${post.display_name || post.user_id}</div> <!-- استفاده از نام نمایشی -->
+                <div class="avatar-sm">
+  ${
+    post.user.avatar
+      ? `<img src="${API_BASE}/media_proxy?file_id=${post.user.avatar}">`
+      : ""
+  }
+</div>
+                <div class="username-display">
+  ${post.user.display_name || post.user.username}
+</div>
               </div>
 
               <div class="post-actions">
@@ -408,7 +422,7 @@ async function loadPost(fullLoad = false){
                 <div class="timeago">${timeAgo(post.created_at)}</div> <!-- زمان پست -->
 
                 <div class="caption">
-                  <b>${post.display_name || post.user_id}</b> 
+                  <b>${post.user.display_name || post.user.username}</b>
                   ${post.caption ? post.caption.substring(0, 100) + (post.caption.length > 100 ? '...' : '') : ''}
                 </div>
                 
@@ -458,8 +472,16 @@ async function loadPost(fullLoad = false){
                     </div>
 
                     <div class="post-header">
-                      <div class="avatar-sm"></div>
-                      <div class="username-display">${post.display_name || post.user_id}</div>
+                      <div class="avatar-sm">
+  ${
+    post.user.avatar
+      ? `<img src="${API_BASE}/media_proxy?file_id=${post.user.avatar}">`
+      : ""
+  }
+</div>
+                      <div class="username-display">
+  ${post.user.display_name || post.user.username}
+</div>
                     </div>
 
                     <div class="post-actions" style="padding-top: 0;">
@@ -479,7 +501,7 @@ async function loadPost(fullLoad = false){
                         </div>
                         <div class="likes-count">${post.likes} پسند</div>
                         <div class="timeago">${timeAgo(post.created_at)}</div>
-                        <div class="caption"><b>${post.display_name || post.user_id}</b> ${post.caption || ""}</div>
+                        <div class="caption"><b>${post.user.display_name || post.user.username}</b> ${post.caption || ""}</div>
                     </div>
                 </div>
             `;
@@ -488,7 +510,13 @@ async function loadPost(fullLoad = false){
                 const commentTime = timeAgo(c.created_at || new Date().toISOString());
                 return `
                   <div class="comment-item">
-                    <div class="avatar-sm"></div>
+                    <div class="avatar-sm">
+  ${
+    post.user.avatar
+      ? `<img src="${API_BASE}/media_proxy?file_id=${post.user.avatar}">`
+      : ""
+  }
+</div>
                     <div class="content">
                         <span class="username-comment">${c.display_name || c.user_id}</span> ${c.text}
                         <div style="font-size: 12px; color: #8e8e8e; margin-top: 4px;">
