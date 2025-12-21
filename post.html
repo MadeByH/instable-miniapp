@@ -227,6 +227,8 @@ let isCommentsPage = false;
 let postData = null; // برای نگهداری داده‌های پست برای دسترسی سریع
 let liked = false;
 let saved = false;
+let replyToCommentId = null;
+let replyToUsername = null;
 
 // --- Utility Functions ---
 
@@ -310,6 +312,15 @@ window.addEventListener("popstate", () => {
         loadPost(false); 
     }
 });
+
+function startReply(commentId, username) {
+  replyToCommentId = commentId;
+  replyToUsername = username;
+
+  commentInput.value = `@${username} `;
+  commentInput.focus();
+  updateSendButtonState();
+    }
 
 // --- توابع کمکی جدید برای Double Tap ---
 
@@ -518,9 +529,14 @@ async function loadPost(fullLoad = false){
   }
 </div>
                     <div class="content">
-                        <span class="username-comment">${c.display_name || c.user_id}</span> ${c.text}
+                        <span class="username-comment">${c.display_name || c.username}</span> ${c.text}
                         <div style="font-size: 12px; color: #8e8e8e; margin-top: 4px;">
-                            <span style="font-weight: bold; margin-left: 6px; cursor: pointer;">پاسخ دادن</span> • ${commentTime}
+                            <span
+  class="reply-btn"
+  onclick="startReply(${c.comment_id}, '${c.username}')"
+>
+  پاسخ دادن
+</span> • ${commentTime}
                         </div>
                     </div>
                   </div>
