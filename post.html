@@ -243,10 +243,6 @@ const commentInput = document.getElementById("commentInput");
 const sendButton = document.getElementById("sendComment");
 const navBar = document.getElementById("nav");
 
-commentInput.addEventListener("input", () => {
-  handleCommentInput(commentInput);
-});
-
 let currentPostId = null;
 let isCommentsPage = false; 
 let postData = null; // برای نگهداری داده‌های پست برای دسترسی سریع
