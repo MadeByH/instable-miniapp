@@ -261,8 +261,17 @@ function startReply(commentId, username) {
 
   commentInput.value = `@${username} `;
   commentInput.focus();
+
+  // بردن کرسر آخر متن
+  setTimeout(() => {
+    commentInput.setSelectionRange(
+      commentInput.value.length,
+      commentInput.value.length
+    );
+  }, 0);
+
   updateSendButtonState();
-    }
+            }
 
 // --- توابع کمکی جدید برای Double Tap ---
 
