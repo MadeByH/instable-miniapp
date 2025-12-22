@@ -174,16 +174,19 @@ body {
 }
 
 /* استایل دکمه ارسال */
+/* استایل دکمه ارسال (نسخه کوچک‌تر شده و با اولویت بالا) */
 .comment-box-fixed button {
-  padding: 4px 8px;
+  padding: 4px 8px; /* کوچک‌ترین حالت برای تست */
   border: none;
   border-radius: 14px;
   background: var(--accent, #0095f6);
   color: #fff;
-  font-size: 12px;
+  font-size: 12px; /* کوچک‌ترین فونت */
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease;
+  /* اضافه کردن !important برای اطمینان (اگر همچنان کار نکرد) */
+  /* min-width: 30px !important;  👈 اگر هنوز بزرگ بود، این خط را اضافه کنید */
 }
 
 .comment-box-fixed button:hover {
