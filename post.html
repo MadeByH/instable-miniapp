@@ -223,7 +223,14 @@ body {
 <!-- کامنت باکس فیکس شده در پایین -->
 <div class="comment-box-fixed" id="commentBoxFixed">
   <textarea id="commentInput" placeholder="افزودن دیدگاه..."></textarea>
-  <button id="sendComment" onclick="sendComment()">ارسال</button>
+  <button
+  id="sendButton"
+  onclick="sendComment(currentPostId)"
+  disabled
+  style="display:none"
+>
+  ارسال
+  </button>
 </div>
 
 <div id="nav"></div>
@@ -242,6 +249,9 @@ const fixedCommentBox = document.getElementById("commentBoxFixed");
 const commentInput = document.getElementById("commentInput");
 const sendButton = document.getElementById("sendComment");
 const navBar = document.getElementById("nav");
+
+// وضعیت اولیه دکمه ارسال
+updateSendButtonState();
 
 let currentPostId = null;
 let isCommentsPage = false; 
@@ -303,9 +313,10 @@ function handleCommentInput(el) {
   el.style.height = Math.min(el.scrollHeight, 120) + "px";
 
   const hasText = el.value.trim().length > 0;
+
   sendButton.disabled = !hasText;
   sendButton.style.display = hasText ? "block" : "none";
-      }
+    }
 
 function focusCommentInput() {
     if (!isCommentsPage) {
