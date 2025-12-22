@@ -247,11 +247,12 @@ const headerBar = document.getElementById("headerBar");
 const pageTitle = document.getElementById("pageTitle");
 const fixedCommentBox = document.getElementById("commentBoxFixed");
 const commentInput = document.getElementById("commentInput");
-const sendButton = document.getElementById("sendComment");
+const sendButton = document.getElementById("sendButton");
 const navBar = document.getElementById("nav");
 
-// وضعیت اولیه دکمه ارسال
-updateSendButtonState();
+commentInput.addEventListener("input", () => {
+  handleCommentInput(commentInput);
+});
 
 let currentPostId = null;
 let isCommentsPage = false; 
