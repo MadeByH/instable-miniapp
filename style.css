@@ -385,3 +385,9 @@ button:not(#sendComment){
 .comment-box-fixed button:disabled {
   opacity: 0.4;
   }
+
+.reply-btn {
+  cursor: pointer;
+  margin-left: 8px;
+  font-size: 13px;
+  }
