@@ -122,8 +122,6 @@ body {
   <button id="sendComment" onclick="sendComment(currentPostId)" disabled>
   ارسال
   </button>
-  ارسال
-  </button>
 </div>
 
 <div id="nav"></div>
@@ -140,12 +138,10 @@ const headerBar = document.getElementById("headerBar");
 const pageTitle = document.getElementById("pageTitle");
 const fixedCommentBox = document.getElementById("commentBoxFixed");
 const commentInput = document.getElementById("commentInput");
-const sendButton = document.getElementById("sendButton");
+const sendButton = document.getElementById("sendComment");
 const navBar = document.getElementById("nav");
 
-commentInput.addEventListener("input", () => {
-  handleCommentInput(commentInput);
-});
+commentInput.addEventListener("input", handleCommentInput.bind(null, commentInput));
 
 let currentPostId = null;
 let isCommentsPage = false; 
