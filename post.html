@@ -136,63 +136,52 @@ body {
 }
 
 /* Comment Box (Fixed Bottom) */
+/* به‌روز رسانی استایل کلی باکس کامنت در پایین صفحه */
 .comment-box-fixed {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
-
-  display: flex;
+  left: 50%; /* مرکز کردن */
+  transform: translateX(-50%);
+  display: flex; /* استفاده از Flexbox */
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
-
-  padding: 8px 20px;
+  padding: 8px 30px; /* کمی فضای افقی بیشتر، این مقدار می‌تونه کم یا زیاد شه */
+  width: 90%; /* عرض نسبی مناسب */
+  max-width: 600px; /* حداکثر عرض */
   background: #000;
   border-top: 1px solid #222;
   z-index: 1000;
   box-sizing: border-box;
+  border-radius: 10px 10px 0 0; /* گوشه‌های گرد */
 }
 
-/* Writing area */
+/* استایل textarea */
 .comment-box-fixed textarea {
   flex: 1;
   min-height: 38px;
   max-height: 120px;
-
-  box-sizing: border-box;
   padding: 8px 12px;
   border-radius: 18px;
   border: 1px solid #333;
   background-color: #111;
-
   resize: none;
   overflow-y: auto;
-
   color: #fff;
   font-size: 14px;
   line-height: 20px;
   font-family: inherit;
-
-  direction: rtl;
   text-align: right;
-  writing-mode: horizontal-tb !important;
-  display: inline-block !important;
 }
 
-/* Send button */
+/* استایل دکمه ارسال */
 .comment-box-fixed button {
-  flex-shrink: 0;
-  height: 38px;
-  padding: 0 14px;
-
+  padding: 8px 15px;
   border: none;
   border-radius: 14px;
-  background: none;
-  color: var(--accent, #0095f6);
+  background: var(--accent, #0095f6);
+  color: #fff;
   font-size: 14px;
   font-weight: 600;
-
   cursor: pointer;
   transition: opacity 0.2s ease;
 }
@@ -200,6 +189,7 @@ body {
 .comment-box-fixed button:hover {
   opacity: 0.8;
 }
+
 .comment-box-fixed button:disabled {
   opacity: 0.4;
 }
