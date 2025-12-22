@@ -111,10 +111,20 @@ textarea:not(#commentInput){
   background:#1c1c1c;
   color:white;
 }
-textarea{
-  resize:none;
-  }
-button{
+/* فقط فرم‌ها – نه کامنت */
+input:not(#commentInput),
+textarea:not(#commentInput){
+  width:100%;
+  margin-top:10px;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  background:#1c1c1c;
+  color:white;
+}
+
+/* دکمه‌های عمومی – نه ارسال کامنت */
+button:not(#sendComment){
   margin-top:16px;
   width:100%;
   padding:12px;
