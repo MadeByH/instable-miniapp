@@ -118,7 +118,7 @@ body {
 
 <!-- کامنت باکس فیکس شده در پایین -->
 <div class="comment-box-fixed" id="commentBoxFixed">
-  <textarea id="commentInput" placeholder="افزودن دیدگاه..."></textarea>
+  <textarea id="commentInput" placeholder="افزودن نظر..."></textarea>
   <button id="sendComment" onclick="sendComment(currentPostId)" disabled>
   ارسال
   </button>
@@ -381,7 +381,7 @@ async function loadPost(fullLoad = false){
                 
                 <div class="comments" id="comments">
                     <div style="font-size: 12px; color: #8e8e8e; cursor: pointer;" onclick="openCommentsPage()">
-                        مشاهده همه ${post.comments.length} دیدگاه
+                        مشاهده همه ${post.comments.length} نظرات
                     </div>
                 </div>
               </div>
@@ -398,7 +398,7 @@ async function loadPost(fullLoad = false){
             isCommentsPage = true;
             headerBar.style.display = 'none'; // هدر اصلی پنهان، هدر صفحه کامنت‌ها نمایش داده می‌شود
             fixedCommentBox.style.display = 'flex';
-            pageTitle.innerText = 'دیدگاه‌ها';
+            pageTitle.innerText = 'نظرات';
             navBar.style.display = "none";
 
             const commentsPageHeader = `
@@ -406,7 +406,7 @@ async function loadPost(fullLoad = false){
     <span onclick="handleBack()">
       <i class="fas fa-arrow-left"></i>
     </span>
-    <h2>دیدگاه‌ها</h2>
+    <h2>نظرات</h2>
     <span style="visibility:hidden;">
       <i class="fas fa-arrow-left"></i>
     </span>
@@ -486,12 +486,11 @@ async function loadPost(fullLoad = false){
               : ""
           }
 
-          <span
-            class="reply-btn"
-            onclick="startReply(${c.comment_id}, ${JSON.stringify(c.username)})"
-          >
-            پاسخ دادن
-          </span>
+          <i
+  class="fas fa-reply reply-btn"
+  onclick="startReply(${c.comment_id}, ${JSON.stringify(c.username)})"
+  title="پاسخ"
+></i>
           • ${commentTime}
         </div>
       </div>
