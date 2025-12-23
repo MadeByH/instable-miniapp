@@ -31,9 +31,27 @@ const API_BASE = "https://insta-api-avn2.onrender.com/api";
 
 const authUser = requireAuth();
 
+const bioInput = document.getElementById("bio");
+
 // پر کردن خودکار
 displayName.value = authUser.first_name || "";
 username.value = authUser.username || "";
+
+function isPersian(text) {
+  return /[\u0600-\u06FF]/.test(text);
+}
+
+bioInput.addEventListener("input", () => {
+  const val = bioInput.value.trim();
+
+  if (isPersian(val)) {
+    bioInput.style.direction = "rtl";
+    bioInput.style.textAlign = "right";
+  } else {
+    bioInput.style.direction = "ltr";
+    bioInput.style.textAlign = "left";
+  }
+});
 
 async function submitRegister(){
   const msg = document.getElementById("msg");
