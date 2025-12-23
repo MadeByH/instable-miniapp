@@ -304,7 +304,7 @@ button:not(#sendComment){
 .comment-item {
   display: flex;
   margin-top: 14px;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 .comment-item .avatar-sm {
@@ -385,6 +385,26 @@ button:not(#sendComment){
 .comment-box-fixed button:disabled {
   opacity: 0.4;
   }
+
+.comments-page-header {
+  display: grid;
+  grid-template-columns: 40px 1fr 40px;
+  align-items: center;
+  padding: 10px;
+  border-bottom: 1px solid #262626;
+  background: #000;
+}
+
+.comments-title {
+  text-align: center;
+  font-size: 15px;   /* کوچیک‌تر از قبل */
+  font-weight: 600;
+  margin: 0;
+}
+
+.header-spacer {
+  width: 40px;
+}
 
 .reply-btn {
   cursor: pointer;
