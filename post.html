@@ -343,7 +343,7 @@ async function loadPost(fullLoad = false){
               <div class="post-media">
                 ${
                   post.type === "video"
-                  ? `<video id="postVideo" src="${API_BASE}/media_proxy?file_id=${post.video_id}" muted loop playsinline></video>`
+                  ? `<video id="postVideo" src="${API_BASE}/media_proxy?file_id=${post.video_id}" muted loop autoplay playsinline></video>`
                   : `<img src="${API_BASE}/media_proxy?file_id=${post.photo}">`
                 }
               </div>
