@@ -319,7 +319,7 @@ async function loadPost(fullLoad = false){
         const id = new URLSearchParams(location.search).get("id");
         currentPostId = id;
 
-        const post = await fetch(`${API_BASE}/get_post/${id}`).then(r=>r.json());
+        const post = await fetch(`${API_BASE}/get_post/${id}?viewer_id=${me.id}`).then(r=>r.json());
         postData = post; // ذخیره داده‌ها برای استفاده در توابع دیگر
         
         // برای نمایش وضعیت اولیه لایک و ذخیره، فرض می‌کنیم از وضعیت دریافتی استفاده می‌کنیم
