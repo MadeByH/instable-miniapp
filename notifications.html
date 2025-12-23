@@ -35,6 +35,18 @@ async function loadNotifications(){
     loading.style.display = "none";
 
     if (!Array.isArray(data) || data.length === 0){
+      // 1. المان اصلی محتوا (root) را برای وسط‌چین شدن تنظیم می‌کنیم
+      root.style.display = "flex";
+      root.style.flexDirection = "column";
+      root.style.alignItems = "center"; // وسط‌چین افقی
+      root.style.justifyContent = "center"; // وسط‌چین عمودی
+      
+      // 2. برای اطمینان از وسط‌چین عمودی، به root ارتفاع می‌دهیم.
+      // این ارتفاع باید به اندازه‌ای باشد که فضای خالی بین نوار بالا و نوار پایین را پر کند.
+      // ما از 80vh استفاده می‌کنیم (80% از ارتفاع ویوپورت) تا فضای کافی برای مرکزیت داشته باشد.
+      root.style.height = "80vh"; 
+      root.style.width = "100%"; // اطمینان از عرض کامل
+
       root.innerHTML = `<p class="center-msg">اعلانی وجود ندارد</p>`;
       return;
     }
