@@ -412,14 +412,15 @@ async function loadPost(fullLoad = false){
 
             const commentsPageHeader = `
   <div class="comments-page-header">
-    <span onclick="handleBack()">
-      <i class="fas fa-arrow-left"></i>
-    </span>
-    <h2>نظرات</h2>
-    <span style="visibility:hidden;">
-      <i class="fas fa-arrow-left"></i>
-    </span>
-  </div>
+  <span class="back-btn" onclick="handleBack()">
+    <i class="fas fa-arrow-left"></i>
+  </span>
+
+  <h2 class="comments-title">دیدگاه‌ها</h2>
+
+  <!-- اسپيسر تقلبی برای بالانس -->
+  <span class="header-spacer"></span>
+</div>
 `;
             
             // --- ساختار بالای صفحه کامنت‌ها (مدیا و هدر پست) ---
@@ -487,13 +488,13 @@ async function loadPost(fullLoad = false){
 
         <div style="font-size:12px;color:#8e8e8e;margin-top:4px;">
           ${
-            c.user_id === me.id
-              ? `<span
-                   onclick="deleteComment(${c.comment_id})"
-                   style="margin-left:8px;color:#f55;cursor:pointer"
-                 >حذف</span>`
-              : ""
-          }
+  Number(c.user_id) === Number(me.id)
+    ? `<span
+         class="comment-delete"
+         onclick="deleteComment(${c.comment_id})"
+       >حذف</span>`
+    : ""
+    }
 
           <i
   class="fas fa-reply reply-btn"
