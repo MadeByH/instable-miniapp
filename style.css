@@ -304,7 +304,7 @@ button:not(#sendComment){
 .comment-item {
   display: flex;
   margin-top: 14px;
-  font-size: 13px;
+  font-size: 13.5px;
 }
 
 .comment-item .avatar-sm {
