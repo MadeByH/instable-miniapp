@@ -104,12 +104,38 @@ async function loadProfile(){
     // 6️⃣ گرید پست‌ها
     postsEl.innerHTML = "";
     posts.forEach(p=>{
-      const img = document.createElement("img");
-      img.src = p.photo
-        ? `${API_BASE}/media_proxy?file_id=${p.photo}`
-        : "https://via.placeholder.com/300";
-      postsEl.appendChild(img);
-    });
+  const wrap = document.createElement("div");
+  wrap.style.position = "relative";
+
+  const img = document.createElement("img");
+  img.src = p.photo
+    ? `${API_BASE}/media_proxy?file_id=${p.photo}`
+    : "https://via.placeholder.com/300";
+
+  img.onclick = () =>
+    location.href = `post.html?id=${p.post_id}`;
+
+  wrap.appendChild(img);
+
+  if (p.type === "video") {
+    const icon = document.createElement("span");
+    icon.innerHTML = "▶️";
+    icon.style.position = "absolute";
+    icon.style.top = "6px";
+    icon.style.left = "6px";
+    wrap.appendChild(icon);
+  }
+
+  postsEl.appendChild(wrap);
+});
+
+    if (posts.length === 0) {
+  postsEl.innerHTML = `
+    <p style="text-align:center;opacity:.6;padding:20px">
+      هنوز پستی منتشر نشده
+    </p>
+  `;
+  }
 
     loading.style.display = "none";
 
