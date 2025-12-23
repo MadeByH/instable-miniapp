@@ -130,12 +130,9 @@ async function loadProfile(){
 });
 
     if (posts.length === 0) {
-  postsEl.innerHTML = `
-    <p style="text-align:center;opacity:.6;padding:20px">
-      هنوز پستی منتشر نشده
-    </p>
-  `;
-  }
+  postsEl.classList.add("empty");
+  postsEl.innerHTML = `<p style="opacity:.6">هنوز پستی منتشر نشده</p>`;
+}
 
     loading.style.display = "none";
 
