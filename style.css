@@ -276,6 +276,12 @@ button:not(#sendComment){
   gap:2px;              /* فاصله کم مثل اینستا */
   margin-top:10px;
     }
+.profile-grid.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
 .insta-header{
   justify-content:space-between;
