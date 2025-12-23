@@ -416,7 +416,7 @@ async function loadPost(fullLoad = false){
     <i class="fas fa-arrow-left"></i>
   </span>
 
-  <h2 class="comments-title">دیدگاه‌ها</h2>
+  <h2 class="comments-title">نظرات</h2>
 
   <!-- اسپيسر تقلبی برای بالانس -->
   <span class="header-spacer"></span>
@@ -483,7 +483,7 @@ async function loadPost(fullLoad = false){
       </div>
 
       <div class="content">
-        <span class="username-comment">${c.username || c.user_id}</span>
+        <span class="username-comment">${c.display_name || c.username}:</span>
         ${c.text}
 
         <div style="font-size:12px;color:#8e8e8e;margin-top:4px;">
