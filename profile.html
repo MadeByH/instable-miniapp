@@ -89,14 +89,6 @@ async function loadProfile(){
     displayName.innerText = user.display_name;
     bio.innerText = user.bio || "";
 
-    if (/[\u0600-\u06FF]/.test(bio.innerText)) {
-  bio.style.direction = "rtl";
-  bio.style.textAlign = "right";
-} else {
-  bio.style.direction = "ltr";
-  bio.style.textAlign = "left";
-    }
-
     postCount.innerText = posts.length;
     followerCount.innerText = user.followers || 0;
     followingCount.innerText = user.following || 0;
