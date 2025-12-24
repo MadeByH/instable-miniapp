@@ -117,6 +117,11 @@ async function loadProfile(){
     <button onclick="toggleFollow(${targetId})">
       ${f.is_following ? "دنبال‌شده" : "دنبال کردن"}
     </button>
+
+    <button class="secondary"
+      onclick="openChat('${user.username}')">
+      پیام دادن
+    </button>
   `;
     }
 
@@ -159,6 +164,21 @@ async function loadProfile(){
     loading.style.display="none";
     root.innerHTML=`<p class="center-msg">خطا در بارگذاری پروفایل</p>`;
   }
+}
+
+function openChat(username){
+  if (!window.Bale?.WebApp) {
+    // fallback برای مرورگر
+    window.open(`https://ble.ir/${username}`, "_blank");
+    return;
+  }
+
+  Bale.WebApp.openLink(
+    `https://ble.ir/${username}`
+  );
+
+  // اختیاری: بستن مینی‌اپ
+  setTimeout(() => Bale.WebApp.close(), 300);
 }
 
 loadProfile();
