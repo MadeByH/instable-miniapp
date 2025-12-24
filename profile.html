@@ -128,8 +128,11 @@ async function loadProfile(){
     media = document.createElement("video");
     media.src = `${API_BASE}/media_proxy?file_id=${p.video_id}`;
     media.muted = true;
+    media.loop = true;
+    media.autoplay = true;
     media.playsInline = true;
     media.preload = "metadata";
+    media.loading = " lazy";
   } else {
     media = document.createElement("img");
     media.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
