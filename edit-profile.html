@@ -38,6 +38,19 @@
 const me = requireAuth();
 
 function openAvatarBot(){
+  if (!window.Bale?.WebApp) {
+    alert("این قابلیت فقط داخل بله فعال است");
+    return;
+  }
+
+  Bale.WebApp.openLink(
+    `https://ble.ir/baleinstagram_bot?start=new_profile_pic_${me.id}`
+  );
+
+  setTimeout(()=>Bale.WebApp.close(), 300);
+}
+
+function openAvatarBot(){
   Bale.WebApp.openLink(
     `https://ble.ir/baleinstagram_bot?start=new_profile_pic_${me.id}`
   );
@@ -61,7 +74,6 @@ async function loadProfile(){
 
   if(user.profile_pic){
     avatar.src = `${API_BASE}/media_proxy?file_id=${user.profile_pic}`;
-    uploadedFileId = user.profile_pic;
   }
 }
 
