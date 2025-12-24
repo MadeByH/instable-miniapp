@@ -283,6 +283,29 @@ button:not(#sendComment){
   justify-content: center;
 }
 
+.profile-post-item {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+}
+
+.profile-post-item img,
+.profile-post-item video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* آیکن ویدیو مثل اینستاگرام */
+.profile-post-item .video-icon {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  color: #fff;
+  font-size: 14px;
+  text-shadow: 0 0 6px rgba(0,0,0,.6);
+}
+
 .insta-header{
   justify-content:space-between;
 }
