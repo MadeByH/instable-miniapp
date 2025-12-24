@@ -74,13 +74,28 @@ async function loadProfile(){
     const user = await fetch(`${API_BASE}/get_user/${targetId}`).then(r=>r.json());
     const posts = await fetch(`${API_BASE}/get_user_posts/${targetId}`).then(r=>r.json());
 
+    document.querySelector(".topbar h1").innerText =
+  isMe ? "پروفایل" : user.username;
+
     // 4️⃣ پر کردن اطلاعات
     profileAvatar.src = user.profile_pic
       ? `${API_BASE}/media_proxy?file_id=${user.profile_pic}`
       : "https://via.placeholder.com/110";
 
+    profileAvatar.onclick = () => {
+  window.open(profileAvatar.src, "_blank");
+};
+
     displayName.innerText = user.display_name;
     bio.innerText = user.bio || "";
+
+    if (/[\u0600-\u06FF]/.test(bio.innerText)) {
+  bio.style.direction = "rtl";
+  bio.style.textAlign = "right";
+} else {
+  bio.style.direction = "ltr";
+  bio.style.textAlign = "left";
+    }
 
     postCount.innerText = posts.length;
     followerCount.innerText = user.followers || 0;
@@ -94,11 +109,15 @@ async function loadProfile(){
         </button>
       `;
     }else{
-      profileActions.innerHTML = `
-        <button onclick="toggleFollow(${targetId})">
-          دنبال کردن
-        </button>
-      `;
+  const f = await fetch(
+    `${API_BASE}/is_following?viewer=${me.id}&target=${targetId}`
+  ).then(r=>r.json());
+
+  profileActions.innerHTML = `
+    <button onclick="toggleFollow(${targetId})">
+      ${f.is_following ? "دنبال‌شده" : "دنبال کردن"}
+    </button>
+  `;
     }
 
     // 6️⃣ گرید پست‌ها
