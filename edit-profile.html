@@ -19,23 +19,38 @@
 </header>
 
 <main class="card" style="margin:20px;">
-  <img id="avatar" class="avatar"
-       src="https://via.placeholder.com/110">
+  <img id="avatar" class="avatar editable"
+     src="https://via.placeholder.com/110">
+
+<p class="change-avatar">تغییر عکس پروفایل</p>
 
   <input id="displayName" placeholder="نام نمایشی">
   <textarea id="bio" placeholder="بیو"></textarea>
-
-  <input type="file" id="photoInput" accept="image/*">
 
   <button onclick="saveProfile()">ذخیره تغییرات</button>
   <p id="msg" class="center-msg"></p>
 </main>
 
 <script src="auth.js"></script>
+
+<script src="https://tapi.bale.ai/miniapp.js?3"></script>
+<script>
+const me = requireAuth();
+
+function openAvatarBot(){
+  Bale.WebApp.openLink(
+    `https://ble.ir/baleinstagram_bot?start=new_profile_pic_${me.id}`
+  );
+
+  setTimeout(()=>Bale.WebApp.close(), 300);
+}
+
+avatar.onclick = openAvatarBot;
+document.querySelector(".change-avatar").onclick = openAvatarBot;
+ </script>
+ 
 <script>
 const API_BASE = "https://insta-api-avn2.onrender.com/api";
-
-let uploadedFileId = null;
 
 async function loadProfile(){
   const me = requireAuth();
@@ -50,27 +65,6 @@ async function loadProfile(){
   }
 }
 
-photoInput.onchange = async () => {
-  const file = photoInput.files[0];
-  if(!file) return;
-
-  const fd = new FormData();
-  fd.append("file", file);
-
-  msg.innerText = "در حال آپلود تصویر…";
-
-  const res = await fetch(`${API_BASE}/upload`, {
-    method: "POST",
-    body: fd
-  });
-
-  const data = await res.json();
-  uploadedFileId = data.file_id;
-
-  avatar.src = URL.createObjectURL(file);
-  msg.innerText = "تصویر آماده شد";
-};
-
 async function saveProfile(){
   msg.innerText = "در حال ذخیره…";
 
@@ -83,8 +77,7 @@ async function saveProfile(){
       body: JSON.stringify({
         user_id: me.id,
         display_name: displayName.value.trim(),
-        bio: bio.value.trim(),
-        profile_pic: uploadedFileId
+        bio: bio.value.trim()
       })
     });
 
