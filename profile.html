@@ -126,27 +126,32 @@ async function loadProfile(){
     }
 
     // 6️⃣ گرید پست‌ها
-    postsEl.innerHTML = "";
-    posts.forEach(p=>{
+    posts.forEach(p => {
   const wrap = document.createElement("div");
-  wrap.style.position = "relative";
+  wrap.className = "profile-post-item";
 
-  const img = document.createElement("img");
-  img.src = p.photo
-    ? `${API_BASE}/media_proxy?file_id=${p.photo}`
-    : "https://via.placeholder.com/300";
-
-  img.onclick = () =>
-    location.href = `post.html?id=${p.post_id}`;
-
-  wrap.appendChild(img);
+  let media;
 
   if (p.type === "video") {
-    const icon = document.createElement("span");
-    icon.innerHTML = "▶️";
-    icon.style.position = "absolute";
-    icon.style.bottom = "6px";
-    icon.style.right = "6px";
+    media = document.createElement("video");
+    media.src = `${API_BASE}/media_proxy?file_id=${p.video_id}`;
+    media.muted = true;
+    media.playsInline = true;
+    media.preload = "metadata";
+  } else {
+    media = document.createElement("img");
+    media.src = `${API_BASE}/media_proxy?file_id=${p.photo}`;
+  }
+
+  media.onclick = () =>
+    location.href = `post.html?id=${p.post_id}`;
+
+  wrap.appendChild(media);
+
+  // آیکن ویدیو (FontAwesome)
+  if (p.type === "video") {
+    const icon = document.createElement("i");
+    icon.className = "fas fa-play video-icon";
     wrap.appendChild(icon);
   }
 
