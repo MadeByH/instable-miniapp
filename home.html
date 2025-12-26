@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>خانه</title>
 <link rel="stylesheet" href="style.css">
+<link rel="stylesheet"
+ href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
 <body>
@@ -13,8 +15,8 @@
 <header class="topbar insta-header">
   <span class="logo">InstaBale</span>
   <div class="top-icons">
-    <span onclick="location.href='upload.html'">➕</span>
-    <span onclick="location.href='notifications.html'">❤️</span>
+    <span onclick="location.href='upload.html'"><i class="fas fa-plus-square"></i></span>
+    <span onclick="location.href='notifications.html'"><i class="far fa-heart"></i></span>
   </div>
 </header>
 
@@ -32,78 +34,160 @@
 
 <script>
 const API_BASE = "https://insta-api-avn2.onrender.com/api";
+const me = requireAuth();
 
-/* -------------------------
-   Stories (فعلاً فیک)
--------------------------- */
-const stories = document.getElementById("stories");
+let page = 0;
+let loadingMore = false;
 
-stories.innerHTML = `
-  <div class="story you">
-    <div class="story-ring">
-      <img src="https://via.placeholder.com/60">
-    </div>
-    شما
-  </div>
-`;
+/* =======================
+   Stories واقعی
+======================= */
+async function loadStories(){
+  const el = document.getElementById("stories");
 
-for(let i=1;i<=8;i++){
-  stories.innerHTML += `
-    <div class="story">
-      <div class="story-ring">
-        <img src="https://via.placeholder.com/60">
+  // استوری خودم
+  el.innerHTML = `
+    <div class="story you" onclick="location.href='story.html'">
+      <div class="story-ring you-ring">
+        <img src="${me.profile_pic
+          ? API_BASE + '/media_proxy?file_id=' + me.profile_pic
+          : 'https://via.placeholder.com/60'}">
+        <span class="story-plus">+</span>
       </div>
-      user${i}
+      شما
     </div>
   `;
+
+  try{
+    const res = await fetch(`${API_BASE}/get_stories/${me.id}`);
+    const stories = await res.json();
+
+    stories.forEach(s=>{
+      el.innerHTML += `
+        <div class="story"
+          onclick="location.href='story.html?user_id=${s.user.id}'">
+
+          <div class="story-ring ${s.has_unseen ? 'active' : 'seen'}">
+            <img src="${s.user.avatar
+              ? API_BASE + '/media_proxy?file_id=' + s.user.avatar
+              : 'https://via.placeholder.com/60'}">
+          </div>
+
+          ${s.user.username}
+        </div>
+      `;
+    });
+  }catch{}
 }
 
-/* -------------------------
-   Feed
--------------------------- */
+/* =======================
+   Feed اینستایی
+======================= */
 async function loadFeed(){
   const feed = document.getElementById("feed");
   const loading = document.getElementById("loading");
 
-  try{
-    const me = requireAuth();
+  loading.style.display = "block";
 
-    const res = await fetch(`${API_BASE}/get_feed/${me.id}`);
+  try{
+    const res = await fetch(`${API_BASE}/get_feed/${me.id}?page=${page}`);
     const posts = await res.json();
 
-    feed.innerHTML = "";
+    posts.forEach((p,i)=>{
+      // پیشنهاد دنبال‌کردن بعد از چند پست
+      if(page === 0 && i === 3){
+        feed.appendChild(buildSuggestBox());
+      }
 
-    posts.forEach(p=>{
       const div = document.createElement("div");
       div.className = "post";
 
       div.innerHTML = `
         <div class="post-header">
-          <div class="avatar-sm">👤</div>
-          <span class="username">user_${p.user_id}</span>
+          <img class="avatar-sm"
+            src="${p.user.avatar
+              ? API_BASE + '/media_proxy?file_id=' + p.user.avatar
+              : 'https://via.placeholder.com/28'}">
+          <span class="username"
+            onclick="location.href='profile.html?user_id=${p.user.id}'">
+            ${p.user.username}
+          </span>
         </div>
 
-        <img class="post-img"
-          src="${p.photo ? API_BASE + '/media_proxy?file_id=' + p.photo : 'https://via.placeholder.com/400'}">
+        ${
+          p.type === "video"
+          ? `<video class="post-img" src="${API_BASE}/media_proxy?file_id=${p.video_id}" muted loop autoplay></video>`
+          : `<img class="post-img" src="${API_BASE}/media_proxy?file_id=${p.photo}">`
+        }
 
         <div class="post-actions">
-          <div>
-            ❤️ 💬 📤
+          <div class="icons">
+            <i class="far fa-heart"></i>
+            <i class="far fa-comment"></i>
+            <i class="far fa-paper-plane"></i>
           </div>
-          <div class="likes">${p.likes || 0} پسند</div>
+          <div class="likes">${p.likes} پسند</div>
         </div>
       `;
 
       feed.appendChild(div);
     });
 
-  }catch(e){
-    feed.innerHTML = `<p class="center-msg">خطا در بارگذاری فید</p>`;
+    if(posts.length === 0 && page === 0){
+      feed.innerHTML = `<p class="center-msg">هنوز پستی وجود ندارد</p>`;
+    }
+
+  }catch{
+    if(page === 0)
+      feed.innerHTML = `<p class="center-msg">خطا در بارگذاری فید</p>`;
   }finally{
     loading.style.display="none";
+    loadingMore = false;
   }
 }
 
+/* =======================
+   پیشنهاد دنبال‌کردن
+======================= */
+function buildSuggestBox(){
+  const box = document.createElement("div");
+  box.className = "suggest-box";
+  box.innerHTML = `
+    <h4>پیشنهاد برای شما</h4>
+    <div class="suggest-list">
+      <div class="suggest-item">
+        <img src="https://via.placeholder.com/50">
+        <span>user_test</span>
+        <button>دنبال کردن</button>
+      </div>
+      <div class="suggest-item">
+        <img src="https://via.placeholder.com/50">
+        <span>instabale</span>
+        <button>دنبال کردن</button>
+      </div>
+    </div>
+  `;
+  return box;
+}
+
+/* =======================
+   Infinite Scroll
+======================= */
+window.addEventListener("scroll", ()=>{
+  if(
+    window.innerHeight + window.scrollY >
+    document.body.offsetHeight - 300
+  ){
+    if(!loadingMore){
+      loadingMore = true;
+      page++;
+      loadFeed();
+    }
+  }
+});
+
+/* Init */
+loadStories();
 loadFeed();
 </script>
 
