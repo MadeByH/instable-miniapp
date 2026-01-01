@@ -48,14 +48,13 @@ async function loadStories(){
   // استوری خودم
   el.innerHTML = `
     <div class="story you" onclick="location.href='story.html'">
-      <div class="story-ring you-ring">
-        <img src="${me.profile_pic
-          ? API_BASE + '/media_proxy?file_id=' + me.profile_pic
-          : 'https://via.placeholder.com/60'}">
-        <span class="story-plus">+</span>
+        <div class="story-ring you-ring">
+          <img src="${me.profile_pic
+            ? API_BASE + '/media_proxy?file_id=' + me.profile_pic
+            : 'https://via.placeholder.com/60'}">
+        </div>
+        شما
       </div>
-      شما
-    </div>
   `;
 
   try{
