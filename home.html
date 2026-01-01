@@ -138,6 +138,7 @@ async function loadFeed(){
 
   }catch{
     if(page === 0)
+      feed.appendChild(buildSuggestBox());
       feed.innerHTML = `<p class="center-msg">خطا در بارگذاری فید</p>`;
   }finally{
     loading.style.display="none";
